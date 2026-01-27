@@ -3,253 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Future Learning Portal</title>
+    <title>Giviso Neural Brain - Second Brain System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --cyan: #06b6d4;
-            --purple: #a855f7;
-            --dark-bg: #050508;
-        }
-
-        body {
-            background: radial-gradient(circle at top right, #1a1a2e 0%, var(--dark-bg) 100%);
-            font-family: 'Inter', sans-serif;
-            color: #e2e8f0;
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-
+        body { background: #050508; color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; }
         .font-futuristic { font-family: 'Orbitron', sans-serif; }
-
-        /* Glassmorphism */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-            transition: all 0.3s ease;
-        }
-
-        .glass-card:hover {
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .glow-cyan { box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
-        
-        #mindmap-container {
-            height: 600px;
-            cursor: grab;
-        }
-
-        #mindmap-container:active { cursor: grabbing; }
-
-        /* Animation cho các phần tử AR */
-        @keyframes pulse-border {
-            0% { border-color: rgba(6, 182, 212, 0.3); }
-            50% { border-color: rgba(6, 182, 212, 1); }
-            100% { border-color: rgba(6, 182, 212, 0.3); }
-        }
-        .ar-pulse { animation: pulse-border 2s infinite; }
+        #network-container { width: 100vw; height: 100vh; background: radial-gradient(circle at center, #0a0a1a 0%, #050508 100%); }
+        .control-panel { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
-<body class="pb-10">
+<body>
 
-    <div id="side-panel" class="fixed top-0 right-0 h-full w-full md:w-96 glass-card z-[100] transform translate-x-full transition-transform duration-500 p-8 border-l border-cyan-500/30">
-        <div class="flex justify-between items-center mb-10">
-            <span class="text-[10px] font-futuristic text-gray-500 tracking-widest">DATA_STREAM</span>
-            <button onclick="closePanel()" class="text-cyan-400 hover:text-white font-bold text-xl">&times;</button>
-        </div>
-        <div id="panel-content">
-            </div>
+    <div class="fixed top-6 left-6 z-50 pointer-events-none">
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter">NEURAL_BRAIN_V1</h1>
+        <p class="text-[10px] text-gray-500 uppercase tracking-[0.3em]">Hệ thống lưu trữ & Truy xuất tư duy</p>
     </div>
 
-    <nav class="p-5 flex justify-between items-center glass-card sticky top-0 z-50 px-6 md:px-12">
-        <div class="flex flex-col">
-            <span class="text-2xl font-futuristic font-bold text-cyan-400 tracking-[0.2em]">GIVISO</span>
-            <span class="text-[10px] uppercase tracking-widest text-gray-500">Master Tech Workspace</span>
-        </div>
-        <div class="hidden lg:flex space-x-10 text-[11px] font-futuristic uppercase tracking-widest">
-            <a href="#" class="text-cyan-400">Hệ thống</a>
-            <a href="#" class="hover:text-cyan-400 transition">Thư viện 3D</a>
-            <a href="#" class="hover:text-cyan-400 transition">Lớp 10A7</a>
-        </div>
-        <div class="w-10 h-10 rounded-full border border-cyan-500/50 flex items-center justify-center bg-cyan-500/10 glow-cyan">
-            <span class="text-cyan-400 text-xs font-bold">10A7</span>
-        </div>
-    </nav>
+    <div class="fixed bottom-6 left-6 z-50 control-panel p-4 rounded-xl text-[11px] text-gray-400 space-y-1">
+        <p><b class="text-cyan-400">[A]</b>: Thêm ý tưởng mới</p>
+        <p><b class="text-cyan-400">[L]</b>: Kết nối 2 nút (Link)</p>
+        <p><b class="text-cyan-400">[Double Click]</b>: Đánh giá mức độ hiểu</p>
+        <p><b class="text-red-500">[Del]</b>: Xóa dữ liệu</p>
+    </div>
 
-    <main class="container mx-auto px-6 pt-10">
-        
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <div class="lg:col-span-8 glass-card rounded-3xl p-6 relative">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 class="font-futuristic text-xl text-cyan-400 uppercase tracking-tighter">Bản đồ Neural</h3>
-                        <p class="text-[10px] text-gray-500 uppercase">Tương tác trực tiếp để truy xuất dữ liệu</p>
-                    </div>
-                    <button onclick="stabilizeMap()" class="text-[9px] border border-cyan-500/30 px-3 py-1 rounded-full hover:bg-cyan-500/20 transition">STABILIZE</button>
+    <div id="data-panel" class="fixed top-0 right-0 h-full w-80 control-panel z-50 transform translate-x-full transition-transform duration-500 p-6">
+        <div id="panel-body">
+            <h2 class="font-futuristic text-cyan-400 mb-4 uppercase">Thông tin truy xuất</h2>
+            <hr class="border-white/10 mb-6">
+            <div id="info-content" class="space-y-4">
                 </div>
-                <div id="mindmap-container" class="rounded-2xl bg-black/40 border border-white/5"></div>
-            </div>
-
-            <div class="lg:col-span-4 space-y-6">
-                <div class="glass-card rounded-3xl p-6 border-t-2 border-purple-500">
-                    <h3 class="font-futuristic text-md mb-4 text-purple-400 flex items-center">
-                        <span class="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></span>
-                        AI Personal Mentor
-                    </h3>
-                    <div class="bg-black/30 p-4 rounded-xl mb-4 h-32 overflow-y-auto text-[13px] text-gray-400 font-light">
-                        Hệ thống đã sẵn sàng. Thầy muốn kiểm tra tiến độ của lớp 10A7 hay cập nhật từ vựng tiếng Trung hôm nay?
-                    </div>
-                    <div class="relative">
-                        <input type="text" placeholder="Lệnh thực thi..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 transition">
-                    </div>
-                </div>
-
-                <div class="glass-card rounded-3xl p-6">
-                    <h3 class="font-futuristic text-md mb-4 uppercase text-[12px] tracking-widest">Trạng thái mục tiêu</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between text-[10px] mb-1 text-gray-400"><span>TIẾNG TRUNG (HSK 3)</span><span>45%</span></div>
-                            <div class="w-full bg-white/5 h-1 rounded-full"><div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full" style="width: 45%"></div></div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-[10px] mb-1 text-gray-400"><span>CHUYÊN MÔN ĐỘNG CƠ</span><span>92%</span></div>
-                            <div class="w-full bg-white/5 h-1 rounded-full"><div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full" style="width: 92%"></div></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card rounded-3xl p-6 ar-pulse border">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-futuristic text-[12px] text-cyan-400">AR Engine V4</h3>
-                        <span class="text-[9px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded">READY</span>
-                    </div>
-                    <div class="h-24 bg-cyan-900/10 rounded-xl flex items-center justify-center">
-                        <p class="text-[10px] text-gray-500 italic">Quét để xem exploded view</p>
-                    </div>
-                </div>
-            </div>
-
         </div>
-    </main>
+    </div>
+
+    <div id="network-container"></div>
 
     <script>
-        // CẤU HÌNH MINDMAP (Cải tiến 2: Màu sắc thông minh)
-        const nodes = new vis.DataSet([
-            { id: 1, label: 'GIVISO', group: 'core', size: 35 },
-            // Nhánh Lớp học (Đỏ - Cần chú ý)
-            { id: 2, label: '10A7', group: 'class' },
-            { id: 3, label: 'Sổ Trực Nhật', group: 'class' },
-            // Nhánh Chuyên môn (Tím - Nghiên cứu)
-            { id: 4, label: 'Động Cơ', group: 'tech' },
-            { id: 5, label: 'Công Nghệ 11', group: 'tech' },
-            // Nhánh Ngôn ngữ (Xanh - Phát triển)
-            { id: 6, label: 'Tiếng Trung', group: 'lang' },
-            { id: 7, label: 'English', group: 'lang' }
+        // 1. DỮ LIỆU GỐC & LƯU TRỮ
+        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_nodes')) || [
+            { id: 1, label: 'GIVISO', color: '#06b6d4', size: 30, level: 3 }
         ]);
+        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_edges')) || []);
 
-        const edges = new vis.DataSet([
-            { from: 1, to: 2, length: 150 }, { from: 1, to: 4, length: 150 }, { from: 1, to: 6, length: 150 },
-            { from: 2, to: 3 }, { from: 4, to: 5 }, { from: 6, to: 7 }
-        ]);
+        const container = document.getElementById('network-container');
+        const data = { nodes, edges };
 
+        // 2. CẤU HÌNH HỆ THỐNG
         const options = {
             nodes: {
                 shape: 'dot',
-                font: { color: '#ffffff', size: 11, face: 'Orbitron' },
+                font: { color: '#ffffff', size: 14, face: 'Inter' },
                 borderWidth: 2,
-                shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 5 }
+                shadow: { enabled: true, color: 'rgba(0,255,255,0.2)', size: 10 }
             },
-            groups: {
-                core: { color: { background: '#0891b2', border: '#22d3ee' }, size: 30 },
-                class: { color: { background: '#ef4444', border: '#f87171' } },
-                tech: { color: { background: '#7c3aed', border: '#a78bfa' } },
-                lang: { color: { background: '#10b981', border: '#34d399' } }
+            edges: {
+                color: { color: 'rgba(255,255,255,0.2)', highlight: '#06b6d4' },
+                arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+                smooth: { type: 'continuous' }
             },
             physics: {
                 enabled: true,
-                barnesHut: { gravitationalConstant: -3000, springLength: 100 }
+                barnesHut: { gravitationalConstant: -3000, springLength: 150 },
+                stabilization: { iterations: 100 }
             }
         };
 
-        const network = new vis.Network(document.getElementById('mindmap-container'), { nodes, edges }, options);
+        const network = new vis.Network(container, data, options);
 
-        // XỬ LÝ SỰ KIỆN CLICK (Cải tiến 1)
-        network.on("click", function (params) {
-            if (params.nodes.length > 0) {
-                const nodeId = params.nodes[0];
-                const nodeData = nodes.get(nodeId);
-                openPanel(nodeData.label);
+        // 3. LOGIC XỬ LÝ "NÃO BỘ"
+        function save() {
+            localStorage.setItem('brain_nodes', JSON.stringify(nodes.get()));
+            localStorage.setItem('brain_edges', JSON.stringify(edges.get()));
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            
+            // THÊM NÚT (A)
+            if (key === 'a') {
+                const label = prompt("Nhập ý tưởng/Kiến thức mới:");
+                if (label) {
+                    const id = Date.now();
+                    nodes.add({ id, label, color: '#94a3b8', level: 1 }); // Mặc định màu xám (chưa hiểu)
+                    save();
+                }
+            }
+
+            // KẾT NỐI (L) - Chọn 2 nút rồi nhấn L
+            if (key === 'l') {
+                const selected = network.getSelectedNodes();
+                if (selected.length === 2) {
+                    edges.add({ from: selected[0], to: selected[1] });
+                    save();
+                } else {
+                    alert("Hãy chọn đúng 2 nút để kết nối!");
+                }
+            }
+
+            // XÓA (Delete)
+            if (e.key === 'Delete') {
+                const selected = network.getSelectedNodes();
+                nodes.remove(selected);
+                save();
             }
         });
 
-        function openPanel(type) {
-            const panel = document.getElementById('side-panel');
-            const content = document.getElementById('panel-content');
-            panel.classList.remove('translate-x-full');
+        // CẬP NHẬT MỨC ĐỘ HIỂU (Double Click)
+        network.on("doubleClick", function (params) {
+            if (params.nodes.length > 0) {
+                const id = params.nodes[0];
+                const current = nodes.get(id);
+                
+                // Chu trình: 1 (Xám - Mới) -> 2 (Vàng - Đang học) -> 3 (Xanh - Đã hiểu)
+                let nextLevel = (current.level || 1) + 1;
+                if (nextLevel > 3) nextLevel = 1;
 
-            let html = '';
-            switch(type) {
-                case '10A7':
-                    html = `
-                        <h2 class="font-futuristic text-red-400 text-xl mb-2 tracking-tighter uppercase">${type} Hub</h2>
-                        <p class="text-[10px] text-gray-500 mb-6">QUẢN LÝ CHỦ NHIỆM</p>
-                        <div class="space-y-4">
-                            <div class="p-4 bg-red-500/5 border border-red-500/20 rounded-2xl">
-                                <p class="text-xs font-bold text-red-400 mb-1">Cần xử lý:</p>
-                                <p class="text-[11px] text-gray-400">- Kiểm tra vệ sinh khu vực B2</p>
-                                <p class="text-[11px] text-gray-400">- Cập nhật sổ điểm tổ 2</p>
-                            </div>
-                            <button class="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-futuristic hover:bg-white/10 transition">DANH SÁCH 47 HỌC SINH</button>
-                        </div>
-                    `;
-                    break;
-                case 'Tiếng Trung':
-                    html = `
-                        <h2 class="font-futuristic text-green-400 text-xl mb-2 uppercase tracking-tighter">Ngôn ngữ</h2>
-                        <div class="p-6 bg-black/40 rounded-3xl border border-green-500/20 text-center my-6">
-                            <p class="text-5xl text-white mb-2 font-light">老师</p>
-                            <p class="text-[10px] text-green-400 uppercase tracking-widest">Lǎoshī (Giáo viên)</p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 mb-6">
-                            <div class="p-3 bg-white/5 rounded-xl text-center"><p class="text-xs">HSK 3</p></div>
-                            <div class="p-3 bg-white/5 rounded-xl text-center"><p class="text-xs">75 Từ mới</p></div>
-                        </div>
-                        <button class="w-full py-3 bg-green-600 rounded-xl text-[10px] font-bold">BẮT ĐẦU ÔN TẬP</button>
-                    `;
-                    break;
-                case 'Động Cơ':
-                    html = `
-                        <h2 class="font-futuristic text-purple-400 text-xl mb-2 uppercase tracking-tighter">Công nghệ</h2>
-                        <div class="aspect-video bg-black/40 rounded-2xl mb-4 border border-purple-500/20 flex items-center justify-center group overflow-hidden">
-                             <div class="text-center">
-                                <p class="text-[10px] text-purple-500 animate-pulse">VIRTUAL ENGINE MODEL</p>
-                                <p class="text-[9px] text-gray-600 mt-2">CLICK ĐỂ KÍCH HOẠT 3D</p>
-                             </div>
-                        </div>
-                        <p class="text-xs text-gray-400 leading-relaxed italic">Phân tích chu trình 4 kỳ: Nạp - Nén - Nổ - Xả trên mô hình cắt bổ.</p>
-                    `;
-                    break;
-                default:
-                    html = `<p class="text-gray-500 italic">Đang truy xuất cơ sở dữ liệu cho ${type}...</p>`;
+                const colors = { 1: '#94a3b8', 2: '#eab308', 3: '#22c55e' };
+                nodes.update({ id, level: nextLevel, color: colors[nextLevel] });
+                save();
             }
-            content.innerHTML = html;
-        }
+        });
 
-        function closePanel() {
-            document.getElementById('side-panel').classList.add('translate-x-full');
-        }
+        // TRUY XUẤT THÔNG TIN (Click)
+        network.on("click", function (params) {
+            const panel = document.getElementById('data-panel');
+            if (params.nodes.length > 0) {
+                const id = params.nodes[0];
+                const node = nodes.get(id);
+                const connectedEdges = edges.get({ filter: e => e.from === id || e.to === id });
+                
+                panel.classList.remove('translate-x-full');
+                document.getElementById('info-content').innerHTML = `
+                    <div class="text-xs text-gray-500 uppercase">Đối tượng</div>
+                    <div class="text-xl font-bold text-white mb-4">${node.label}</div>
+                    
+                    <div class="text-[10px] text-gray-500 uppercase">Mức độ hiểu</div>
+                    <div class="flex items-center mt-1">
+                        <span class="status-dot" style="background:${node.color}"></span>
+                        <span class="text-sm">${node.level === 3 ? 'Đã nắm vững' : node.level === 2 ? 'Đang nghiên cứu' : 'Dữ liệu thô'}</span>
+                    </div>
 
-        function stabilizeMap() {
-            network.stabilize();
-        }
+                    <div class="mt-6 text-[10px] text-gray-500 uppercase">Liên kết liên quan</div>
+                    <div class="text-xs mt-2 text-cyan-400 italic">
+                        Có ${connectedEdges.length} kết nối trong mạng lưới thần kinh.
+                    </div>
+                `;
+            } else {
+                panel.classList.add('translate-x-full');
+            }
+        });
     </script>
 </body>
 </html>

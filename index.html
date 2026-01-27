@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Neural Brain - Evolution</title>
+    <title>Giviso Neural Brain - Mind Flow</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -14,96 +14,133 @@
         .glass-panel { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         #network-container { width: 100vw; height: 100vh; background: radial-gradient(circle at center, #0d0d1f 0%, #050508 100%); }
         
-        /* Vis.js Tool Manipulation Style */
-        .vis-network { outline: none; }
-        .vis-edit-mode { background: rgba(6, 182, 212, 0.1) !important; border-bottom: 1px solid var(--cyan) !important; }
-        .vis-button { background-color: transparent !important; color: #fff !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 4px !important; margin: 5px !important; }
-        .vis-button:hover { background-color: var(--cyan) !important; }
+        /* Nút cộng (+) nổi trên canvas */
+        #floating-plus {
+            position: absolute; display: none; width: 24px; height: 24px;
+            background: var(--cyan); border-radius: 50%; color: black;
+            text-align: center; line-height: 24px; font-weight: bold;
+            cursor: pointer; z-index: 100; box-shadow: 0 0 15px var(--cyan);
+            transition: transform 0.2s;
+        }
+        #floating-plus:hover { transform: scale(1.2); }
+        
+        /* Ẩn thanh công cụ mặc định của vis-network để đẹp hơn */
+        .vis-manipulation { display: none !important; }
     </style>
 </head>
 <body>
 
     <div class="fixed top-6 left-8 z-50 pointer-events-none">
-        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter glow-text uppercase">Giviso_Brain_Evolution</h1>
-        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Hệ thống phân nhánh tri thức chủ động</p>
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Mind_Flow</h1>
+        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Double Click: Hiểu | Click +: Sinh nhánh</p>
     </div>
 
-    <div class="fixed top-24 left-8 z-50 w-56 glass-panel rounded-2xl p-5 border-l-2 border-cyan-500">
-        <h3 class="font-futuristic text-[10px] text-cyan-400 mb-4 tracking-widest uppercase">Radar Định Vị</h3>
-        <div id="node-list" class="max-h-[40vh] overflow-y-auto space-y-1 pr-2 text-[11px]"></div>
+    <div id="floating-plus" title="Sinh nhánh mới">+</div>
+
+    <div class="fixed top-24 left-8 z-50 w-52 glass-panel rounded-2xl p-4 border-l-2 border-cyan-500">
+        <div id="node-list" class="max-h-[40vh] overflow-y-auto space-y-1 text-[11px]"></div>
     </div>
 
-    <div id="data-panel" class="fixed top-0 right-0 h-full w-96 glass-panel z-[100] transform translate-x-full transition-transform duration-500 p-8 border-l border-cyan-500/20">
-        <button onclick="closePanel()" class="absolute top-6 right-8 text-gray-500 hover:text-white font-futuristic text-xs">[ ĐÓNG ]</button>
-        <div id="panel-body" class="mt-8">
-            </div>
+    <div id="data-panel" class="fixed top-0 right-0 h-full w-80 glass-panel z-[100] transform translate-x-full transition-transform duration-500 p-8 border-l border-cyan-500/20">
+        <button onclick="closePanel()" class="text-gray-500 hover:text-white text-xs mb-8 uppercase font-futuristic tracking-widest">[ Close ]</button>
+        <div id="panel-body"></div>
     </div>
 
     <div id="network-container"></div>
 
     <script>
-        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_ev_nodes')) || [{ id: 1, label: 'GIVISO', color: '#06b6d4', level: 3 }]);
-        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_ev_edges')) || []);
+        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_flow_nodes')) || [{ id: 1, label: 'GIVISO', color: '#06b6d4', level: 3 }]);
+        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_flow_edges')) || []);
+        let selectedNodeId = null;
 
         function saveData() {
-            localStorage.setItem('brain_ev_nodes', JSON.stringify(nodes.get()));
-            localStorage.setItem('brain_ev_edges', JSON.stringify(edges.get()));
+            localStorage.setItem('brain_flow_nodes', JSON.stringify(nodes.get()));
+            localStorage.setItem('brain_flow_edges', JSON.stringify(edges.get()));
         }
 
         const container = document.getElementById('network-container');
+        const plusButton = document.getElementById('floating-plus');
+
         const options = {
             nodes: { shape: 'dot', font: { color: '#ffffff', size: 14, face: 'Inter' }, borderWidth: 2 },
-            edges: { color: { color: 'rgba(255,255,255,0.2)', highlight: '#06b6d4' }, arrows: { to: { enabled: true, scaleFactor: 0.5 } } },
-            manipulation: {
-                enabled: true, // CÁCH 1: KÉO THẢ TẠO LIÊN KẾT QUA THANH CÔNG CỤ
-                addEdge: function (data, callback) {
-                    if (data.from == data.to) return;
-                    callback(data);
-                    saveData();
-                }
-            },
-            physics: { enabled: true, barnesHut: { gravitationalConstant: -2000 } }
+            edges: { color: { color: 'rgba(255,255,255,0.15)' }, arrows: { to: { enabled: true, scaleFactor: 0.5 } } },
+            physics: { enabled: true, barnesHut: { gravitationalConstant: -2000, springLength: 150 } }
         };
 
         const network = new vis.Network(container, { nodes, edges }, options);
 
-        // CÁCH 2: PHÂN NHÁNH TỪ NÚT ĐƯỢC CHỌN (DẤU +)
-        function spawnBranch(parentId) {
-            const label = prompt("Nhập ý tưởng nhánh mới:");
-            if (label) {
-                const newId = Date.now();
-                nodes.add({ id: newId, label, color: '#94a3b8', level: 1 });
-                edges.add({ from: parentId, to: newId });
-                saveData();
-                teleport(newId);
+        // 1. SINH NHÁNH BẰNG DẤU + NỔI
+        network.on("click", function(params) {
+            if (params.nodes.length > 0) {
+                selectedNodeId = params.nodes[0];
+                const pos = params.pointer.DOM;
+                plusButton.style.left = (pos.x + 20) + 'px';
+                plusButton.style.top = (pos.y - 20) + 'px';
+                plusButton.style.display = 'block';
+                openPanelById(selectedNodeId);
+            } else {
+                plusButton.style.display = 'none';
+                closePanel();
             }
-        }
+        });
 
+        plusButton.onclick = function() {
+            if (selectedNodeId) {
+                const label = prompt("Nhánh kiến thức mới:");
+                if (label) {
+                    const newId = Date.now();
+                    nodes.add({ id: newId, label, color: '#94a3b8', level: 1 });
+                    edges.add({ from: selectedNodeId, to: newId });
+                    saveData();
+                    updateRadar();
+                }
+            }
+        };
+
+        // 2. NHẤN CHUỘT 2 LẦN ĐỔI MÀU (ĐÁNH GIÁ MỨC ĐỘ)
+        network.on("doubleClick", function(params) {
+            if (params.nodes.length > 0) {
+                const id = params.nodes[0];
+                const node = nodes.get(id);
+                let nextLevel = (node.level || 1) + 1;
+                if (nextLevel > 3) nextLevel = 1;
+                
+                const colors = { 1: '#94a3b8', 2: '#eab308', 3: '#22c55e' }; // Xám -> Vàng -> Xanh
+                nodes.update({ id, level: nextLevel, color: colors[nextLevel] });
+                saveData();
+                updateRadar();
+                openPanelById(id); // Cập nhật màu trong panel
+            }
+        });
+
+        // 3. TRUY XUẤT THÔNG TIN
         function openPanelById(id) {
             const node = nodes.get(id);
             const panel = document.getElementById('data-panel');
             panel.classList.remove('translate-x-full');
             document.getElementById('panel-body').innerHTML = `
-                <h2 class="text-2xl font-bold text-white font-futuristic mb-6 uppercase">${node.label}</h2>
-                
-                <button onclick="spawnBranch(${id})" class="w-full py-4 mb-6 bg-cyan-500/10 border border-dashed border-cyan-500/50 rounded-xl flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition-all group">
-                    <span class="text-2xl font-bold text-cyan-400 group-hover:scale-125 transition-transform">+</span>
-                    <span class="text-[10px] text-cyan-400 font-futuristic">SINH NHÁNH MỚI</span>
-                </button>
-
-                <div class="mb-6">
-                    <label class="text-[10px] text-gray-500 uppercase">Ghi chú não bộ</label>
-                    <textarea id="node-note" class="w-full h-48 bg-black/40 border border-white/10 rounded-xl mt-2 p-4 text-xs text-gray-300 focus:outline-none focus:border-cyan-500">${node.note || ''}</textarea>
+                <h2 class="text-xl font-bold text-cyan-400 font-futuristic mb-4 uppercase tracking-tighter">${node.label}</h2>
+                <div class="mb-6 bg-white/5 p-3 rounded-lg border border-white/10">
+                    <p class="text-[10px] text-gray-500 uppercase mb-1">Trạng thái nhận thức</p>
+                    <p class="text-xs font-bold" style="color:${node.color}">
+                        ${node.level === 3 ? 'ĐÃ THẤU SUỐT' : node.level === 2 ? 'ĐANG NGHIÊN CỨU' : 'DỮ LIỆU MỚI'}
+                    </p>
                 </div>
-                <button onclick="updateNote(${id})" class="w-full py-2 bg-cyan-600 text-white text-[10px] font-bold rounded-lg uppercase">Cập nhật ghi chú</button>
+                <textarea id="node-note" class="w-full h-64 bg-black/40 border border-white/10 rounded-xl p-4 text-xs text-gray-300 focus:outline-none focus:border-cyan-500" placeholder="Nhập ghi chú...">${node.note || ''}</textarea>
+                <button onclick="updateNote(${id})" class="w-full py-3 mt-4 bg-cyan-600/20 border border-cyan-500/50 text-cyan-400 text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-cyan-600 hover:text-white transition">Đồng bộ bộ nhớ</button>
             `;
         }
 
-        // ĐIỀU HƯỚNG & CẬP NHẬT RADAR
+        function updateNote(id) {
+            nodes.update({ id, note: document.getElementById('node-note').value });
+            saveData();
+            alert("Đã lưu vào não bộ!");
+        }
+
         function updateRadar() {
             const list = document.getElementById('node-list');
             list.innerHTML = nodes.get().map(node => `
-                <div onclick="teleport(${node.id})" class="p-2 cursor-pointer hover:bg-white/5 rounded flex items-center">
+                <div onclick="teleport(${node.id})" class="p-2 cursor-pointer hover:bg-white/5 rounded flex items-center truncate">
                     <span class="w-2 h-2 rounded-full mr-2" style="background:${node.color}"></span> ${node.label}
                 </div>`).join('');
         }
@@ -114,16 +151,12 @@
             openPanelById(id);
         }
 
-        function updateNote(id) {
-            nodes.update({ id, note: document.getElementById('node-note').value });
-            saveData();
-            alert("Đã ghi nhớ!");
-        }
-
-        network.on("click", (p) => p.nodes.length > 0 ? openPanelById(p.nodes[0]) : closePanel());
         function closePanel() { document.getElementById('data-panel').classList.add('translate-x-full'); }
         nodes.on('*', updateRadar);
         updateRadar();
+
+        // Di chuyển nút Space để fit view
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); network.fit({animation:true}); } });
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Neural Sync - Full Features</title>
+    <title>Giviso Neural Sync - Fast Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -33,8 +33,8 @@
 <body>
 
     <div class="fixed top-6 left-8 z-50 pointer-events-none">
-        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Sync_Ultimate</h1>
-        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Space: Focus | N: Add Node | Click +: Branch</p>
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Sync_Fast</h1>
+        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Space: Focus | N: Add Node | Double Click: Level Up</p>
     </div>
 
     <div id="floating-plus">+</div>
@@ -45,9 +45,6 @@
         <button onclick="activateAddNodeMode()" class="w-full py-3 bg-cyan-600/10 border border-cyan-500/30 rounded-xl text-[9px] text-cyan-400 hover:bg-cyan-600 hover:text-white transition uppercase font-bold tracking-widest">
             + THÊM THỰC THỂ [N]
         </button>
-        <button onclick="focusCenter()" class="w-full mt-2 py-2 border border-white/5 rounded-lg text-[8px] text-gray-500 hover:text-white transition uppercase">
-            Căn giữa bản đồ [Space]
-        </button>
     </div>
 
     <div id="data-panel" class="fixed top-0 right-0 h-full w-96 glass-panel z-[100] transform translate-x-full transition-transform duration-500 p-8 border-l border-cyan-500/20">
@@ -57,11 +54,10 @@
 
     <div id="system-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md">
         <div id="modal-box" class="glass-panel w-96 p-8 rounded-3xl border border-cyan-500/30 transform scale-95 transition-all duration-200">
-            <h3 id="modal-title" class="font-futuristic text-cyan-400 text-xs mb-4 tracking-widest uppercase">Thông báo</h3>
-            <div id="modal-desc" class="text-xs text-gray-400 mb-4 hidden"></div>
-            <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6 hidden">
+            <h3 id="modal-title" class="font-futuristic text-cyan-400 text-xs mb-4 tracking-widest uppercase">Tạo thực thể mới</h3>
+            <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6" placeholder="Nhập tên kiến thức/học sinh...">
             <div class="flex gap-4">
-                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-white/10 text-gray-500 text-[10px] font-bold uppercase tracking-widest">Hủy</button>
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 text-[10px] font-bold uppercase tracking-widest">Hủy</button>
                 <button id="modal-confirm" class="flex-1 py-3 rounded-xl bg-cyan-600 text-black text-[10px] font-bold uppercase tracking-widest shadow-lg">Xác nhận</button>
             </div>
         </div>
@@ -70,9 +66,10 @@
     <div id="network-container"></div>
 
     <script>
-        // --- DỮ LIỆU ---
-        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_final_nodes')) || [{ id: 1, label: 'GIVISO', color: '#06b6d4', level: 3, lastUpdate: Date.now() }]);
-        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_final_edges')) || []);
+        // --- DỮ LIỆU CÁ NHÂN HÓA ---
+        // Quản lý lớp 10A7 với 47 học sinh và các dự án công nghệ
+        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_fast_nodes')) || [{ id: 1, label: 'GIVISO', color: '#06b6d4', level: 3, lastUpdate: Date.now() }]);
+        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_fast_edges')) || []);
         let selectedNodeId = null;
         let isAddNodeMode = false;
 
@@ -90,26 +87,17 @@
 
         const network = new vis.Network(container, { nodes, edges }, options);
 
-        // --- HỆ THỐNG MODAL ---
-        function showModal(title, type = 'prompt', message = '', callback) {
+        // --- HỆ THỐNG MODAL TỐI GIẢN ---
+        function showNamePrompt(title, callback) {
             document.getElementById('modal-title').innerText = title;
             modal.classList.remove('hidden');
             setTimeout(() => modalBox.classList.replace('scale-95', 'scale-100'), 10);
-            
-            if (type === 'prompt') {
-                modalInput.classList.remove('hidden');
-                document.getElementById('modal-desc').classList.add('hidden');
-                modalInput.value = '';
-                setTimeout(() => modalInput.focus(), 100);
-            } else {
-                modalInput.classList.add('hidden');
-                document.getElementById('modal-desc').classList.remove('hidden');
-                document.getElementById('modal-desc').innerText = message;
-            }
+            modalInput.value = '';
+            setTimeout(() => modalInput.focus(), 100);
 
             document.getElementById('modal-confirm').onclick = () => {
                 const val = modalInput.value;
-                if (type === 'prompt' && !val) return;
+                if (!val) return;
                 closeModal();
                 if (callback) callback(val);
             };
@@ -122,7 +110,7 @@
 
         // --- ĐIỀU HƯỚNG & FOCUS ---
         function focusCenter() {
-            network.fit({ animation: { duration: 1000, easingFunction: 'easeInOutQuad' } });
+            network.fit({ animation: { duration: 1000 } });
         }
 
         function teleport(id) {
@@ -131,24 +119,11 @@
             openPanelById(id);
         }
 
-        // --- LOGIC TRUY XUẤT CÁCH QUÃNG (7 NGÀY) ---
-        function checkSpacedRepetition() {
-            const now = Date.now();
-            const weekMs = 7 * 24 * 60 * 60 * 1000;
-            nodes.forEach(node => {
-                if (now - (node.lastUpdate || 0) > weekMs && node.level < 3) {
-                    nodes.update({ id: node.id, shadow: { enabled: true, color: '#f43f5e', size: 25 } });
-                } else {
-                    nodes.update({ id: node.id, shadow: { enabled: false } });
-                }
-            });
-        }
-
         // --- THAO TÁC NÚT ---
         function activateAddNodeMode() {
             isAddNodeMode = true;
             container.style.cursor = 'crosshair';
-            showModal("Hệ thống", "alert", "Click vào vị trí bất kỳ trên bản đồ để đặt thực thể mới.");
+            // Đã lược bỏ bảng hỏi "Click vào vị trí..." theo yêu cầu người dùng
         }
 
         network.on("click", function(params) {
@@ -156,7 +131,9 @@
                 const canvasPos = params.pointer.canvas;
                 isAddNodeMode = false;
                 container.style.cursor = 'default';
-                showModal("Tạo thực thể", "prompt", "", (label) => {
+                
+                // Chỉ hiện hộp thoại đặt tên ngay khi click
+                showNamePrompt("Đặt tên thực thể", (label) => {
                     const newId = Date.now();
                     nodes.add({ id: newId, label, color: '#94a3b8', level: 1, lastUpdate: Date.now(), x: canvasPos.x, y: canvasPos.y });
                     saveData();
@@ -180,7 +157,7 @@
         });
 
         plusButton.onclick = () => {
-            showModal("Sinh nhánh mới", "prompt", "", (label) => {
+            showNamePrompt("Sinh nhánh mới", (label) => {
                 if (label && selectedNodeId) {
                     const newId = Date.now();
                     nodes.add({ id: newId, label, color: '#94a3b8', level: 1, lastUpdate: Date.now() });
@@ -191,6 +168,7 @@
             });
         };
 
+        // --- CƠ CHẾ ĐỔI MÀU & LƯU TRỮ ---
         network.on("doubleClick", (p) => {
             if (p.nodes.length > 0) {
                 const id = p.nodes[0];
@@ -204,7 +182,6 @@
             }
         });
 
-        // --- UI HELPER ---
         function openPanelById(id) {
             const node = nodes.get(id);
             document.getElementById('data-panel').classList.remove('translate-x-full');
@@ -214,7 +191,7 @@
                     TRẠNG THÁI: <span style="color:${node.color}">${node.level === 3 ? 'THẤU SUỐT' : node.level === 2 ? 'PHÂN TÍCH' : 'DỮ LIỆU MỚI'}</span>
                 </div>
                 <textarea id="node-note" class="w-full h-72 bg-black/40 border border-white/10 rounded-2xl p-5 text-xs text-gray-300 focus:outline-none focus:border-cyan-500">${node.note || ''}</textarea>
-                <button onclick="updateNote(${id})" class="w-full py-4 mt-6 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold rounded-xl uppercase tracking-widest hover:bg-cyan-600 hover:text-white transition">Lưu trí thức</button>
+                <button onclick="updateNote(${id})" class="w-full py-4 mt-6 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold rounded-xl uppercase tracking-widest hover:bg-cyan-600 transition">Đồng bộ bộ nhớ</button>
             `;
         }
 
@@ -224,21 +201,4 @@
         }
 
         function updateRadar() {
-            document.getElementById('node-list').innerHTML = nodes.get().map(n => `<div onclick="teleport(${n.id})" class="p-2 cursor-pointer hover:bg-white/5 rounded-lg flex items-center transition-all truncate"><span class="w-1.5 h-1.5 rounded-full mr-3" style="background:${n.color}"></span>${n.label}</div>`).join('');
-        }
-
-        function saveData() { localStorage.setItem('brain_final_nodes', JSON.stringify(nodes.get())); localStorage.setItem('brain_final_edges', JSON.stringify(edges.get())); }
-        function closePanel() { document.getElementById('data-panel').classList.add('translate-x-full'); }
-
-        nodes.on('*', updateRadar);
-        updateRadar();
-        setInterval(checkSpacedRepetition, 30000);
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'n') activateAddNodeMode();
-            if (e.code === 'Space' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); focusCenter(); }
-            if (e.key === 'Enter' && !modal.classList.contains('hidden')) document.getElementById('modal-confirm').click();
-        });
-    </script>
-</body>
-</html>
+            document.getElementById('node

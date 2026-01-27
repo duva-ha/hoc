@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Neural Sync - Ultimate</title>
+    <title>Giviso Neural Sync - Full Features</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -11,54 +11,57 @@
         :root { --cyan: #06b6d4; --bg: #050508; --warning: #f43f5e; }
         body { background: var(--bg); color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
         .font-futuristic { font-family: 'Orbitron', sans-serif; }
-        .glass-panel { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-panel { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         #network-container { width: 100vw; height: 100vh; background: radial-gradient(circle at center, #0d0d1f 0%, #050508 100%); }
         
         #floating-plus {
-            position: absolute; display: none; width: 28px; height: 28px;
+            position: absolute; display: none; width: 30px; height: 30px;
             background: var(--cyan); border-radius: 50%; color: black;
-            text-align: center; line-height: 28px; font-weight: bold;
+            text-align: center; line-height: 30px; font-weight: bold;
             cursor: pointer; z-index: 100; box-shadow: 0 0 15px var(--cyan);
         }
         .vis-manipulation { display: none !important; }
         
         /* Hiệu ứng nhấp nháy cho Spaced Repetition */
-        @keyframes pulse-node {
-            0% { box-shadow: 0 0 0px var(--warning); }
-            50% { box-shadow: 0 0 20px var(--warning); }
-            100% { box-shadow: 0 0 0px var(--warning); }
+        @keyframes pulse-warning {
+            0% { shadow-blur: 5px; shadow-color: var(--warning); }
+            50% { shadow-blur: 25px; shadow-color: var(--warning); }
+            100% { shadow-blur: 5px; shadow-color: var(--warning); }
         }
     </style>
 </head>
 <body>
 
     <div class="fixed top-6 left-8 z-50 pointer-events-none">
-        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Spaced_Brain</h1>
-        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Hệ thống truy xuất cách quãng 7 ngày</p>
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Sync_Ultimate</h1>
+        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Space: Focus | N: Add Node | Click +: Branch</p>
     </div>
 
-    <div id="floating-plus" title="Sinh nhánh mới">+</div>
+    <div id="floating-plus">+</div>
 
     <div class="fixed top-24 left-8 z-50 w-60 glass-panel rounded-2xl p-5 border-l-2 border-cyan-500 shadow-2xl">
         <h3 class="font-futuristic text-[10px] text-cyan-400 mb-4 tracking-widest uppercase">Radar Định Vị</h3>
-        <div id="node-list" class="max-h-[35vh] overflow-y-auto space-y-1 text-[11px] mb-4"></div>
-        <button onclick="activateAddNodeMode()" class="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-[9px] text-gray-400 hover:text-cyan-400 transition uppercase font-bold tracking-widest">
-            + THÊM NÚT ĐỘC LẬP [N]
+        <div id="node-list" class="max-h-[35vh] overflow-y-auto space-y-1 text-[11px] mb-4 pr-2"></div>
+        <button onclick="activateAddNodeMode()" class="w-full py-3 bg-cyan-600/10 border border-cyan-500/30 rounded-xl text-[9px] text-cyan-400 hover:bg-cyan-600 hover:text-white transition uppercase font-bold tracking-widest">
+            + THÊM THỰC THỂ [N]
+        </button>
+        <button onclick="focusCenter()" class="w-full mt-2 py-2 border border-white/5 rounded-lg text-[8px] text-gray-500 hover:text-white transition uppercase">
+            Căn giữa bản đồ [Space]
         </button>
     </div>
 
     <div id="data-panel" class="fixed top-0 right-0 h-full w-96 glass-panel z-[100] transform translate-x-full transition-transform duration-500 p-8 border-l border-cyan-500/20">
-        <button onclick="closePanel()" class="text-gray-500 hover:text-white text-[10px] mb-8 uppercase font-futuristic">[ Đóng ]</button>
+        <button onclick="closePanel()" class="text-gray-500 hover:text-white text-[10px] mb-8 uppercase font-futuristic tracking-widest">[ Close ]</button>
         <div id="panel-body"></div>
     </div>
 
-    <div id="system-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm">
-        <div class="glass-panel w-96 p-8 rounded-3xl border border-cyan-500/30 transform scale-95 transition-all duration-300">
+    <div id="system-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md">
+        <div id="modal-box" class="glass-panel w-96 p-8 rounded-3xl border border-cyan-500/30 transform scale-95 transition-all duration-200">
             <h3 id="modal-title" class="font-futuristic text-cyan-400 text-xs mb-4 tracking-widest uppercase">Thông báo</h3>
             <div id="modal-desc" class="text-xs text-gray-400 mb-4 hidden"></div>
             <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6 hidden">
             <div class="flex gap-4">
-                <button id="modal-cancel" onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 text-[10px] font-bold uppercase tracking-widest">Hủy</button>
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-white/10 text-gray-500 text-[10px] font-bold uppercase tracking-widest">Hủy</button>
                 <button id="modal-confirm" class="flex-1 py-3 rounded-xl bg-cyan-600 text-black text-[10px] font-bold uppercase tracking-widest shadow-lg">Xác nhận</button>
             </div>
         </div>
@@ -67,16 +70,17 @@
     <div id="network-container"></div>
 
     <script>
-        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_pro_nodes')) || [{ id: 1, label: 'GIVISO', color: '#06b6d4', level: 3, lastUpdate: Date.now() }]);
-        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_pro_edges')) || []);
+        // --- DỮ LIỆU ---
+        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_final_nodes')) || [{ id: 1, label: 'GIVISO', color: '#06b6d4', level: 3, lastUpdate: Date.now() }]);
+        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_final_edges')) || []);
         let selectedNodeId = null;
         let isAddNodeMode = false;
 
         const container = document.getElementById('network-container');
         const plusButton = document.getElementById('floating-plus');
         const modal = document.getElementById('system-modal');
+        const modalBox = document.getElementById('modal-box');
         const modalInput = document.getElementById('modal-input');
-        const modalDesc = document.getElementById('modal-desc');
 
         const options = {
             nodes: { shape: 'dot', font: { color: '#ffffff', size: 14, face: 'Inter' }, borderWidth: 2 },
@@ -86,48 +90,77 @@
 
         const network = new vis.Network(container, { nodes, edges }, options);
 
-        // --- HỆ THỐNG MODAL TÙY CHỈNH ---
-        function showSystemModal(title, type = 'prompt', message = '', callback) {
+        // --- HỆ THỐNG MODAL ---
+        function showModal(title, type = 'prompt', message = '', callback) {
             document.getElementById('modal-title').innerText = title;
             modal.classList.remove('hidden');
+            setTimeout(() => modalBox.classList.replace('scale-95', 'scale-100'), 10);
             
             if (type === 'prompt') {
                 modalInput.classList.remove('hidden');
-                modalDesc.classList.add('hidden');
+                document.getElementById('modal-desc').classList.add('hidden');
                 modalInput.value = '';
-                modalInput.focus();
+                setTimeout(() => modalInput.focus(), 100);
             } else {
                 modalInput.classList.add('hidden');
-                modalDesc.classList.remove('hidden');
-                modalDesc.innerText = message;
+                document.getElementById('modal-desc').classList.remove('hidden');
+                document.getElementById('modal-desc').innerText = message;
             }
 
             document.getElementById('modal-confirm').onclick = () => {
                 const val = modalInput.value;
+                if (type === 'prompt' && !val) return;
                 closeModal();
                 if (callback) callback(val);
             };
         }
 
-        function closeModal() { modal.classList.add('hidden'); }
+        function closeModal() {
+            modalBox.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
 
-        // --- QUẢN LÝ NODE & LIÊN KẾT ---
+        // --- ĐIỀU HƯỚNG & FOCUS ---
+        function focusCenter() {
+            network.fit({ animation: { duration: 1000, easingFunction: 'easeInOutQuad' } });
+        }
+
+        function teleport(id) {
+            network.focus(id, { scale: 1.2, animation: { duration: 800 } });
+            network.selectNodes([id]);
+            openPanelById(id);
+        }
+
+        // --- LOGIC TRUY XUẤT CÁCH QUÃNG (7 NGÀY) ---
+        function checkSpacedRepetition() {
+            const now = Date.now();
+            const weekMs = 7 * 24 * 60 * 60 * 1000;
+            nodes.forEach(node => {
+                if (now - (node.lastUpdate || 0) > weekMs && node.level < 3) {
+                    nodes.update({ id: node.id, shadow: { enabled: true, color: '#f43f5e', size: 25 } });
+                } else {
+                    nodes.update({ id: node.id, shadow: { enabled: false } });
+                }
+            });
+        }
+
+        // --- THAO TÁC NÚT ---
         function activateAddNodeMode() {
             isAddNodeMode = true;
-            showSystemModal("Chế độ thêm nút", "alert", "Click vào bất kỳ điểm trống nào trên bản đồ để đặt vị trí nút mới.");
+            container.style.cursor = 'crosshair';
+            showModal("Hệ thống", "alert", "Click vào vị trí bất kỳ trên bản đồ để đặt thực thể mới.");
         }
 
         network.on("click", function(params) {
             if (isAddNodeMode && params.nodes.length === 0) {
                 const canvasPos = params.pointer.canvas;
-                showSystemModal("Tạo thực thể mới", "prompt", "", (label) => {
-                    if (label) {
-                        const newId = Date.now();
-                        nodes.add({ id: newId, label, color: '#94a3b8', level: 1, lastUpdate: Date.now(), x: canvasPos.x, y: canvasPos.y });
-                        saveData();
-                    }
-                });
                 isAddNodeMode = false;
+                container.style.cursor = 'default';
+                showModal("Tạo thực thể", "prompt", "", (label) => {
+                    const newId = Date.now();
+                    nodes.add({ id: newId, label, color: '#94a3b8', level: 1, lastUpdate: Date.now(), x: canvasPos.x, y: canvasPos.y });
+                    saveData();
+                });
                 return;
             }
 
@@ -147,7 +180,7 @@
         });
 
         plusButton.onclick = () => {
-            showSystemModal("Sinh nhánh tri thức", "prompt", "", (label) => {
+            showModal("Sinh nhánh mới", "prompt", "", (label) => {
                 if (label && selectedNodeId) {
                     const newId = Date.now();
                     nodes.add({ id: newId, label, color: '#94a3b8', level: 1, lastUpdate: Date.now() });
@@ -158,20 +191,6 @@
             });
         };
 
-        // --- TRUY XUẤT CÁCH QUÃNG (7 NGÀY) ---
-        function runSpacedRepetition() {
-            const now = Date.now();
-            const weekMs = 7 * 24 * 60 * 60 * 1000;
-            nodes.forEach(node => {
-                if (now - node.lastUpdate > weekMs && node.level < 3) {
-                    nodes.update({ id: node.id, shadow: { enabled: true, color: '#f43f5e', size: 25 } });
-                } else {
-                    nodes.update({ id: node.id, shadow: { enabled: false } });
-                }
-            });
-        }
-
-        // --- CƠ CHẾ ĐỔI MÀU (DOUBLE CLICK) ---
         network.on("doubleClick", (p) => {
             if (p.nodes.length > 0) {
                 const id = p.nodes[0];
@@ -185,43 +204,40 @@
             }
         });
 
-        // --- UI & DATA FUNCTIONS ---
+        // --- UI HELPER ---
         function openPanelById(id) {
             const node = nodes.get(id);
-            const lastView = new Date(node.lastUpdate).toLocaleDateString('vi-VN');
             document.getElementById('data-panel').classList.remove('translate-x-full');
             document.getElementById('panel-body').innerHTML = `
-                <h2 class="text-xl font-bold text-cyan-400 font-futuristic mb-2">${node.label}</h2>
-                <p class="text-[9px] text-gray-500 mb-6 uppercase tracking-widest">Cập nhật cuối: ${lastView}</p>
-                <textarea id="node-note" class="w-full h-72 bg-black/40 border border-white/10 rounded-2xl p-5 text-xs text-gray-300 focus:outline-none focus:border-cyan-500 leading-relaxed">${node.note || ''}</textarea>
-                <button onclick="updateNote(${id})" class="w-full py-4 mt-6 bg-cyan-600/20 text-cyan-400 text-[10px] font-bold rounded-xl uppercase tracking-widest border border-cyan-500/30 hover:bg-cyan-600 hover:text-white transition">Đồng bộ bộ nhớ</button>
+                <h2 class="text-xl font-bold text-cyan-400 font-futuristic mb-4 uppercase">${node.label}</h2>
+                <div class="mb-4 bg-white/5 p-3 rounded-lg border border-white/10 text-[10px]">
+                    TRẠNG THÁI: <span style="color:${node.color}">${node.level === 3 ? 'THẤU SUỐT' : node.level === 2 ? 'PHÂN TÍCH' : 'DỮ LIỆU MỚI'}</span>
+                </div>
+                <textarea id="node-note" class="w-full h-72 bg-black/40 border border-white/10 rounded-2xl p-5 text-xs text-gray-300 focus:outline-none focus:border-cyan-500">${node.note || ''}</textarea>
+                <button onclick="updateNote(${id})" class="w-full py-4 mt-6 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold rounded-xl uppercase tracking-widest hover:bg-cyan-600 hover:text-white transition">Lưu trí thức</button>
             `;
         }
 
         function updateNote(id) {
             nodes.update({ id, note: document.getElementById('node-note').value, lastUpdate: Date.now() });
             saveData();
-            showSystemModal("Thành công", "alert", "Tri thức đã được đồng bộ vào hệ thống thần kinh.");
         }
 
         function updateRadar() {
-            document.getElementById('node-list').innerHTML = nodes.get().map(n => `
-                <div onclick="teleport(${n.id})" class="p-2 cursor-pointer hover:bg-white/5 rounded-lg flex items-center truncate transition-all">
-                    <span class="w-2 h-2 rounded-full mr-3" style="background:${n.color}"></span> ${n.label}
-                </div>`).join('');
+            document.getElementById('node-list').innerHTML = nodes.get().map(n => `<div onclick="teleport(${n.id})" class="p-2 cursor-pointer hover:bg-white/5 rounded-lg flex items-center transition-all truncate"><span class="w-1.5 h-1.5 rounded-full mr-3" style="background:${n.color}"></span>${n.label}</div>`).join('');
         }
 
-        function saveData() { localStorage.setItem('brain_pro_nodes', JSON.stringify(nodes.get())); localStorage.setItem('brain_pro_edges', JSON.stringify(edges.get())); }
-        function teleport(id) { network.focus(id, { scale: 1.2, animation: true }); network.selectNodes([id]); openPanelById(id); }
+        function saveData() { localStorage.setItem('brain_final_nodes', JSON.stringify(nodes.get())); localStorage.setItem('brain_final_edges', JSON.stringify(edges.get())); }
         function closePanel() { document.getElementById('data-panel').classList.add('translate-x-full'); }
 
         nodes.on('*', updateRadar);
         updateRadar();
-        setInterval(runSpacedRepetition, 10000); // Check mỗi 10s
+        setInterval(checkSpacedRepetition, 30000);
 
         window.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'n') activateAddNodeMode();
-            if (e.code === 'Space' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); network.fit({animation:true}); }
+            if (e.code === 'Space' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); focusCenter(); }
+            if (e.key === 'Enter' && !modal.classList.contains('hidden')) document.getElementById('modal-confirm').click();
         });
     </script>
 </body>

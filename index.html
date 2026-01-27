@@ -3,104 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Future Learning</title>
+    <title>Giviso - Hệ sinh thái tự học tương lai</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --cyan: #06b6d4;
+            --purple: #a855f7;
+            --dark-bg: #050508;
+        }
+
         body {
-            background: radial-gradient(circle at center, #1a1a2e 0%, #070708 100%);
+            background: radial-gradient(circle at top right, #1a1a2e 0%, var(--dark-bg) 100%);
             font-family: 'Inter', sans-serif;
             color: #e2e8f0;
             overflow-x: hidden;
+            min-height: 100vh;
         }
+
         .font-futuristic { font-family: 'Orbitron', sans-serif; }
+
+        /* Hiệu ứng kính mờ (Glassmorphism) */
         .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
         }
-        .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.5); }
-        .animate-pulse-slow { animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .glass-card:hover {
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+
+        /* Tùy chỉnh thanh cuộn */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--dark-bg); }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        
+        #mindmap-container {
+            height: 500px;
+            cursor: move;
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="pb-10">
 
-    <nav class="p-6 flex justify-between items-center border-b border-white/10 glass-card sticky top-0 z-50">
-        <div class="text-2xl font-futuristic font-bold text-cyan-400 tracking-widest">GIVISO <span class="text-white text-xs block font-light tracking-tighter">FUTURE ED</span></div>
-        <div class="hidden md:flex space-x-8 text-sm uppercase tracking-widest">
-            <a href="#" class="hover:text-cyan-400 transition">Bản đồ tư duy</a>
-            <a href="#" class="hover:text-cyan-400 transition">Kho lưu trữ</a>
-            <a href="#" class="hover:text-cyan-400 transition">Trợ lý AI</a>
+    <nav class="p-5 flex justify-between items-center glass-card sticky top-0 z-50 px-10">
+        <div class="flex flex-col">
+            <span class="text-2xl font-futuristic font-bold text-cyan-400 tracking-[0.2em] glow-text">GIVISO</span>
+            <span class="text-[10px] uppercase tracking-widest text-gray-500">Industrial Tech Hub</span>
         </div>
-        <div class="w-10 h-10 rounded-full border-2 border-cyan-500 overflow-hidden glow-cyan">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher" alt="Avatar">
+        <div class="hidden md:flex space-x-10 text-[11px] font-futuristic uppercase tracking-widest">
+            <a href="#" class="text-cyan-400 hover:text-white transition">Dashboard</a>
+            <a href="#" class="hover:text-cyan-400 transition">Hồ sơ 10A7</a>
+            <a href="#" class="hover:text-cyan-400 transition">Thư viện AR</a>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-right hidden sm:block">
+                <p class="text-[10px] text-gray-400 uppercase">Trình độ</p>
+                <p class="text-xs font-bold text-purple-400">BẬC THẦY CÔNG NGHỆ</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg border border-cyan-500/50 flex items-center justify-center bg-cyan-500/10">
+                <span class="text-cyan-400 font-bold">T</span>
+            </div>
         </div>
     </nav>
 
-    <main class="container mx-auto px-6 py-12">
+    <main class="container mx-auto px-6 pt-10">
         
-        <header class="mb-16 text-center">
-            <h1 class="text-5xl md:text-7xl font-futuristic mb-4 font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500">
-                HỆ THỐNG TỰ HỌC 4.0
+        <header class="mb-10 relative">
+            <div class="absolute -top-10 -left-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl"></div>
+            <h1 class="text-4xl md:text-6xl font-futuristic font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
+                WORKSPACE 2026
             </h1>
-            <p class="text-gray-400 tracking-widest uppercase text-sm">Khám phá tri thức qua lăng kính tương lai</p>
+            <p class="text-gray-500 text-sm tracking-widest uppercase">Hệ thống quản trị và tự học siêu cá nhân hóa</p>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
             
-            <div class="md:col-span-2 glass-card rounded-3xl p-8 relative overflow-hidden group">
-                <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-100 transition-opacity">
-                    <div class="w-32 h-32 border-4 border-cyan-500 rounded-full border-dashed animate-spin-slow"></div>
-                </div>
-                <h3 class="font-futuristic text-xl mb-6 text-cyan-300">Tiến trình học tập</h3>
-                <div class="space-y-6">
-                    <div>
-                        <div class="flex justify-between text-xs mb-2"><span>CÔNG NGHỆ CHẾ TẠO</span><span>75%</span></div>
-                        <div class="w-full bg-white/10 h-1.5 rounded-full"><div class="bg-cyan-500 h-full rounded-full glow-cyan" style="width: 75%"></div></div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs mb-2"><span>TIẾNG ANH CHUYÊN NGÀNH</span><span>40%</span></div>
-                        <div class="w-full bg-white/10 h-1.5 rounded-full"><div class="bg-purple-500 h-full rounded-full" style="width: 40%"></div></div>
+            <div class="md:col-span-8 glass-card rounded-3xl p-6 relative">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-futuristic text-lg text-cyan-400">Bản đồ tư duy 9x9</h3>
+                    <div class="flex gap-2">
+                        <button onclick="stabilizeMap()" class="text-[9px] bg-white/5 border border-white/10 px-3 py-1 rounded hover:bg-cyan-500/20 transition">CÂN BẰNG</button>
                     </div>
                 </div>
-            </div>
-
-            <div class="glass-card rounded-3xl p-8 border-cyan-500/30">
-                <h3 class="font-futuristic text-xl mb-4 text-purple-400">Trợ lý AI</h3>
-                <p class="text-sm text-gray-400 mb-6 italic">"Chào giáo viên, hôm nay bạn cần giải đáp thuật ngữ nào?"</p>
-                <input type="text" placeholder="Hỏi AI..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 text-sm transition">
-                <button class="mt-4 w-full bg-gradient-to-r from-cyan-600 to-blue-600 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:scale-105 transition">Gửi yêu cầu</button>
-            </div>
-
-            <div class="glass-card rounded-3xl p-8 flex flex-col justify-between hover:border-cyan-500/50 transition">
-                <div>
-                    <h3 class="font-futuristic text-xl mb-2">Mô hình AR</h3>
-                    <p class="text-xs text-gray-500">Động cơ đốt trong v4.0</p>
-                </div>
-                <div class="h-32 bg-cyan-900/20 rounded-2xl flex items-center justify-center border border-dashed border-cyan-500/30">
-                    <span class="text-cyan-400 text-xs animate-pulse-slow">SẴN SÀNG QUÉT AR</span>
+                <div id="mindmap-container" class="rounded-2xl bg-black/40 border border-white/5"></div>
+                <div class="absolute bottom-10 left-10 pointer-events-none">
+                    <p class="text-[10px] text-cyan-500/50 font-mono tracking-tighter animate-pulse">SYSTEM_SCANNING... ACTIVE</p>
                 </div>
             </div>
 
-            <div class="md:col-span-2 glass-card rounded-3xl p-8 grid grid-cols-2 gap-4">
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <span class="block text-2xl font-bold font-futuristic text-cyan-400">05</span>
-                    <span class="text-[10px] uppercase text-gray-400">Bài giảng đã hoàn thành</span>
+            <div class="md:col-span-4 space-y-6">
+                <div class="glass-card rounded-3xl p-6 border-l-4 border-purple-500">
+                    <h3 class="font-futuristic text-lg mb-4 text-purple-400">AI Mentor</h3>
+                    <div class="bg-black/30 p-4 rounded-xl mb-4 h-40 overflow-y-auto text-sm text-gray-400 leading-relaxed">
+                        <p class="mb-2"><span class="text-cyan-400">● AI:</span> Chào thầy, hôm nay chúng ta sẽ tiếp tục phần "Hệ thống bôi trơn" trên động cơ 4 thì chứ?</p>
+                    </div>
+                    <div class="relative">
+                        <input type="text" placeholder="Nhập câu hỏi..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500">
+                        <button class="absolute right-2 top-2 bg-cyan-600 p-1.5 rounded-lg text-xs">GỬI</button>
+                    </div>
                 </div>
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <span class="block text-2xl font-bold font-futuristic text-purple-400">120</span>
-                    <span class="text-[10px] uppercase text-gray-400">Phút tập trung (Deep Work)</span>
+
+                <div class="glass-card rounded-3xl p-6">
+                    <h3 class="font-futuristic text-lg mb-4">Thống kê học tập</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-1"><span>LỚP 10A7 - TRỰC NHẬT</span><span>88%</span></div>
+                            <div class="w-full bg-white/5 h-1 rounded-full"><div class="bg-green-500 h-full" style="width: 88%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-1"><span>TIẾNG TRUNG - HSK 3</span><span>35%</span></div>
+                            <div class="w-full bg-white/5 h-1 rounded-full"><div class="bg-orange-500 h-full" style="width: 35%"></div></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <div class="md:col-span-4 glass-card rounded-3xl p-6 group cursor-pointer">
+                <div class="h-40 mb-4 bg-gradient-to-br from-cyan-900/20 to-purple-900/20 rounded-2xl flex items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                    <span class="text-cyan-400 font-futuristic text-xs tracking-widest border border-cyan-400 px-4 py-2 rounded-full">XEM MÔ HÌNH AR</span>
+                </div>
+                <h4 class="font-bold text-sm uppercase">Động cơ xe máy 4 thì</h4>
+                <p class="text-xs text-gray-500">Chế độ: Exploded View (Phóng nổ cấu tạo)</p>
+            </div>
+
+            <div class="md:col-span-8 glass-card rounded-3xl p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="border border-white/5 p-4 rounded-2xl bg-white/5">
+                    <p class="text-gray-500 text-[10px] uppercase">Hôm nay</p>
+                    <p class="text-2xl font-futuristic text-cyan-400">08/10</p>
+                    <p class="text-[10px]">Nhiệm vụ hoàn thành</p>
+                </div>
+                <div class="border border-white/5 p-4 rounded-2xl bg-white/5">
+                    <p class="text-gray-500 text-[10px] uppercase">Tích lũy</p>
+                    <p class="text-2xl font-futuristic text-purple-400">1.2k</p>
+                    <p class="text-[10px]">Điểm Exp công nghệ</p>
+                </div>
+                <div class="border border-white/5 p-4 rounded-2xl bg-white/5">
+                    <p class="text-gray-500 text-[10px] uppercase">Lớp 10A7</p>
+                    <p class="text-2xl font-futuristic text-green-400">47</p>
+                    <p class="text-[10px]">Học sinh trực tuyến</p>
+                </div>
+            </div>
         </div>
     </main>
 
-    <footer class="mt-20 p-10 text-center text-gray-600 text-[10px] tracking-[0.3em] uppercase">
-        System Status: <span class="text-green-500">Operational</span> | Neural Link: Stable
-    </footer>
+    <script>
+        // Cấu hình Bản đồ tư duy
+        const container = document.getElementById('mindmap-container');
+        
+        const nodes = new vis.DataSet([
+            { id: 1, label: 'GIVISO', group: 'main', size: 30 },
+            { id: 2, label: 'Lớp 10A7', group: 'class' },
+            { id: 3, label: 'Công Nghệ', group: 'subject' },
+            { id: 4, label: 'Ngoại Ngữ', group: 'subject' },
+            { id: 5, label: 'Sổ Trực Nhật', group: 'class' },
+            { id: 6, label: 'Động Cơ Đốt Trong', group: 'subject' },
+            { id: 7, label: 'English Tech', group: 'lang' },
+            { id: 8, label: 'Tiếng Trung', group: 'lang' },
+            { id: 9, label: 'Vẽ Kỹ Thuật', group: 'subject' }
+        ]);
 
+        const edges = new vis.DataSet([
+            { from: 1, to: 2 }, { from: 1, to: 3 }, { from: 1, to: 4 },
+            { from: 2, to: 5 }, { from: 3, to: 6 }, { from: 3, to: 9 },
+            { from: 4, to: 7 }, { from: 4, to: 8 }
+        ]);
+
+        const data = { nodes, edges };
+
+        const options = {
+            nodes: {
+                shape: 'dot',
+                font: { color: '#ffffff', size: 12, face: 'Orbitron' },
+                borderWidth: 2,
+                shadow: { enabled: true, color: 'rgba(6, 182, 212, 0.3)', size: 10 }
+            },
+            edges: {
+                color: { color: 'rgba(255, 255, 255, 0.1)', highlight: '#06b6d4' },
+                width: 1,
+                smooth: { type: 'dynamic' }
+            },
+            groups: {
+                main: { color: { background: '#0891b2', border: '#22d3ee' } },
+                class: { color: { background: '#16a34a', border: '#4ade80' } },
+                subject: { color: { background: '#7c3aed', border: '#a78bfa' } },
+                lang: { color: { background: '#db2777', border: '#f472b6' } }
+            },
+            physics: {
+                enabled: true,
+                barnesHut: { gravitationalConstant: -3000, centralGravity: 0.3, springLength: 120 },
+                stabilization: { iterations: 100 }
+            }
+        };
+
+        const network = new vis.Network(container, data, options);
+
+        function stabilizeMap() {
+            network.stabilize();
+        }
+
+        // Hiệu ứng rê chuột nhẹ nhàng cho toàn trang
+        document.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+            document.body.style.backgroundPosition = `${moveX}px ${moveY}px`;
+        });
+    </script>
 </body>
 </html>

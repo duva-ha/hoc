@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Neural Sync - V15</title>
+    <title>Giviso Neural Sync - V16 Quiz Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -14,173 +14,181 @@
         .glass-panel { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); }
         #network-container { width: 100vw; height: 100vh; background: radial-gradient(circle at center, #0d112d 0%, #050508 100%); }
         
-        /* Thanh trượt Zoom dọc bên phải */
-        .zoom-wrapper { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); z-index: 100; height: 300px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .vertical-slider { appearance: none; width: 4px; height: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; outline: none; writing-mode: bt-lr; -webkit-appearance: slider-vertical; }
-        .vertical-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: var(--cyan); cursor: pointer; box-shadow: 0 0 10px var(--cyan); }
-
-        #floating-plus { position: absolute; display: none; width: 35px; height: 35px; background: var(--cyan); border-radius: 50%; color: black; text-align: center; line-height: 35px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 0 20px var(--cyan); transition: transform 0.2s; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--cyan); cursor: pointer; }
+        /* Zoom Slider */
+        .zoom-wrapper { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .vertical-slider { appearance: none; width: 4px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 10px; outline: none; -webkit-appearance: slider-vertical; }
+        
+        #floating-plus { position: absolute; display: none; width: 35px; height: 35px; background: var(--cyan); border-radius: 50%; color: black; text-align: center; line-height: 35px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 0 20px var(--cyan); }
+        .quiz-active { color: #f43f5e !important; border-color: #f43f5e !important; box-shadow: 0 0 15px rgba(244, 63, 94, 0.3); }
     </style>
 </head>
 <body>
 
     <div class="fixed top-6 left-8 z-50 pointer-events-none">
-        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Visual_V15</h1>
-        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Space: Fit | N: Add | DoubleClick: Color Cycle</p>
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Quiz_V16</h1>
+        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em]">Q: Toggle Quiz | DoubleClick: Change Color</p>
     </div>
 
     <div id="floating-plus">+</div>
 
     <div class="fixed top-24 left-8 z-50 w-64 glass-panel rounded-2xl p-6 border-l-2 border-cyan-500 shadow-2xl">
-        <input type="text" id="search-input" oninput="neuralSearch()" placeholder="Tìm kiếm thực thể..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] text-cyan-400 focus:outline-none mb-4">
-        <div id="node-list" class="max-h-[35vh] overflow-y-auto space-y-1 text-[11px] mb-6 pr-2"></div>
-        <button onclick="activateAddNodeMode()" class="w-full py-3 bg-cyan-600/10 border border-cyan-500/30 rounded-xl text-[9px] text-cyan-400 hover:bg-cyan-600 hover:text-white transition-all uppercase font-bold tracking-widest shadow-lg">
-            + THÊM THỰC THỂ [N]
+        <button id="quiz-btn" onclick="toggleQuizMode()" class="w-full py-3 mb-4 bg-white/5 border border-white/10 rounded-xl text-[9px] text-gray-400 hover:text-white transition-all uppercase font-bold tracking-widest flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Chế độ Quiz [Q]
         </button>
+        <input type="text" id="search-input" oninput="neuralSearch()" placeholder="Tìm nhanh..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] text-cyan-400 focus:outline-none mb-4">
+        <div id="node-list" class="max-h-[30vh] overflow-y-auto space-y-1 text-[11px] pr-2"></div>
     </div>
 
     <div class="zoom-wrapper glass-panel py-6 px-2 rounded-full border border-white/5">
-        <span class="text-[8px] text-cyan-400 font-bold">+</span>
         <input type="range" id="zoom-slider" class="vertical-slider" min="0.1" max="3" step="0.1" value="1">
-        <span class="text-[8px] text-cyan-400 font-bold">-</span>
     </div>
 
-    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[150] w-[60%] glass-panel p-6 rounded-[2.5rem] border border-white/10 shadow-2xl">
+    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[150] w-[60%] glass-panel p-6 rounded-[2.5rem] border border-white/10">
         <div class="flex items-center gap-4">
-            <button id="play-btn" onclick="togglePlay()" class="w-12 h-12 flex items-center justify-center bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 hover:bg-cyan-500 transition-all shadow-lg">
-                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <button onclick="togglePlay()" class="w-12 h-12 flex items-center justify-center bg-cyan-500/10 border border-cyan-500/30 rounded-full text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all">
+                <svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </button>
-            <button id="speed-btn" onclick="changeSpeed()" class="w-14 h-12 flex items-center justify-center bg-white/5 border border-white/10 rounded-2xl text-[10px] font-bold text-cyan-400 font-futuristic">x1</button>
+            <button onclick="changeSpeed()" id="speed-btn" class="w-14 h-12 flex items-center justify-center bg-white/5 border border-white/10 rounded-2xl text-[10px] font-bold text-cyan-400 font-futuristic">x1</button>
             <div class="flex-1 px-4">
-                <div class="flex justify-between items-center mb-2 px-1">
-                    <span id="time-display" class="text-[10px] font-mono text-cyan-400/80 tracking-widest uppercase">HIỆN TẠI</span>
-                </div>
                 <input type="range" id="time-slider" class="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer outline-none" min="0" max="100" value="100">
+                <p id="time-display" class="text-[8px] text-center mt-2 text-gray-600 font-mono uppercase">Hiện tại</p>
             </div>
         </div>
     </div>
 
     <div id="system-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md">
-        <div id="modal-box" class="glass-panel w-96 p-8 rounded-3xl border border-cyan-500/30 transform scale-95 transition-all">
-            <h3 id="modal-title" class="font-futuristic text-cyan-400 text-[10px] mb-6 tracking-widest uppercase text-center">Khởi tạo Neuron</h3>
-            <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6" placeholder="Nhập tên...">
-            <div class="flex gap-4">
-                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border border-white/10 text-gray-500 text-[10px] font-bold uppercase tracking-widest">Hủy</button>
-                <button id="modal-confirm" class="flex-1 py-3 rounded-xl bg-cyan-600 text-black text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-cyan-900/40">Xác nhận</button>
-            </div>
+        <div id="modal-box" class="glass-panel w-96 p-8 rounded-3xl border border-cyan-500/30">
+            <h3 class="font-futuristic text-cyan-400 text-[10px] mb-6 tracking-widest uppercase text-center">Tạo Thực Thể Mới</h3>
+            <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6" placeholder="Tên học sinh / Linh kiện...">
+            <button id="modal-confirm" class="w-full py-4 rounded-xl bg-cyan-600 text-black text-[10px] font-bold uppercase tracking-widest shadow-lg">Xác nhận</button>
         </div>
     </div>
 
     <div id="network-container"></div>
 
     <script>
-        // --- DATA ---
-        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v15_nodes')) || [{ id: Date.now(), label: 'GIVISO', color: '#06b6d4', colorIndex: 0, lastUpdate: Date.now() }]);
-        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v15_edges')) || []);
-        let selectedNodeId = null;
+        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v16_nodes')) || [{ id: Date.now(), label: 'GIVISO', color: '#06b6d4', colorIndex: 0, lastUpdate: Date.now() }]);
+        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v16_edges')) || []);
+        let isQuizMode = false;
         let isAddNodeMode = false;
         let isPlaying = false;
         let currentSpeed = 1;
-
         const colorsCycle = ['#06b6d4', '#22c55e', '#eab308', '#f97316', '#a855f7', '#f43f5e'];
 
         const network = new vis.Network(document.getElementById('network-container'), { nodes, edges }, {
-            nodes: { shape: 'dot', font: { color: '#ffffff', face: 'Inter', size: 14 }, borderWidth: 2, shadow: { enabled: true, color: 'rgba(6,182,212,0.3)', size: 12 } },
-            edges: { color: { color: 'rgba(6, 182, 212, 0.25)', highlight: '#06b6d4' }, arrows: 'to', smooth: true, width: 1.5, dashes: { enabled: true, speed: 5 } },
-            physics: { enabled: true, barnesHut: { gravitationalConstant: -5000, centralGravity: 0.1, springLength: 200, damping: 0.09 } }
+            nodes: { shape: 'dot', font: { color: '#ffffff', face: 'Inter', size: 14 }, borderWidth: 2, shadow: true },
+            edges: { color: 'rgba(6, 182, 212, 0.2)', arrows: 'to', smooth: true, dashes: { enabled: true, speed: 5 } },
+            physics: { enabled: true, barnesHut: { gravitationalConstant: -5000, springLength: 200 } }
         });
 
-        // --- ZOOM CONTROL ---
-        document.getElementById('zoom-slider').oninput = function() {
-            network.moveTo({ scale: parseFloat(this.value) });
-        };
-        network.on("zoom", (p) => { document.getElementById('zoom-slider').value = p.scale; });
+        // --- CHẾ ĐỘ QUIZ (ẨN TÊN) ---
+        function toggleQuizMode() {
+            isQuizMode = !isQuizMode;
+            const btn = document.getElementById('quiz-btn');
+            btn.classList.toggle('quiz-active');
+            updateNodeLabels();
+        }
 
-        // --- DOUBLE CLICK ĐỔI MÀU ---
+        function updateNodeLabels() {
+            nodes.update(nodes.get().map(n => ({
+                id: n.id,
+                label: isQuizMode ? "?" : n.originalLabel || n.label,
+                originalLabel: n.originalLabel || n.label
+            })));
+        }
+
+        // Hiện tên khi rê chuột trong chế độ Quiz
+        network.on("hoverNode", (p) => {
+            if (isQuizMode) {
+                const node = nodes.get(p.node);
+                nodes.update({ id: p.node, label: node.originalLabel });
+            }
+        });
+        network.on("blurNode", (p) => {
+            if (isQuizMode) {
+                nodes.update({ id: p.node, label: "?" });
+            }
+        });
+
+        // --- CÁC CHỨC NĂNG CỐT LÕI (GIỮ NGUYÊN) ---
         network.on("doubleClick", (p) => {
             if (p.nodes.length > 0) {
-                const id = p.nodes[0];
-                const node = nodes.get(id);
-                let nextIndex = ((node.colorIndex || 0) + 1) % colorsCycle.length;
-                nodes.update({ id: id, color: colorsCycle[nextIndex], colorIndex: nextIndex, lastUpdate: Date.now() });
+                const id = p.nodes[0]; const n = nodes.get(id);
+                let idx = ((n.colorIndex || 0) + 1) % colorsCycle.length;
+                nodes.update({ id: id, color: colorsCycle[idx], colorIndex: idx, lastUpdate: Date.now() });
                 saveData();
             }
         });
 
-        // --- NEURAL SEARCH ---
-        function neuralSearch() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            nodes.update(nodes.get().map(n => ({ id: n.id, opacity: n.label.toLowerCase().includes(query) ? 1 : 0.1 })));
-        }
+        document.getElementById('zoom-slider').oninput = function() { network.moveTo({ scale: parseFloat(this.value) }); };
+        network.on("zoom", (p) => { document.getElementById('zoom-slider').value = p.scale; });
 
-        // --- CÁC HÀM CỐT LÕI (BẢO TOÀN) ---
         function activateAddNodeMode() { isAddNodeMode = true; document.getElementById('network-container').style.cursor = 'crosshair'; }
         
         network.on("click", (p) => {
             if (isAddNodeMode && p.nodes.length === 0) {
-                showModal((l) => { nodes.add({id:Date.now(), label:l, color:colorsCycle[0], colorIndex:0, lastUpdate:Date.now(), x:p.pointer.canvas.x, y:p.pointer.canvas.y}); saveData(); });
-                isAddNodeMode = false; document.getElementById('network-container').style.cursor = 'default'; return;
+                showModal((l) => { nodes.add({id:Date.now(), label:l, originalLabel:l, color:colorsCycle[0], colorIndex:0, lastUpdate:Date.now(), x:p.pointer.canvas.x, y:p.pointer.canvas.y}); saveData(); updateNodeLabels(); });
+                isAddNodeMode = false; document.getElementById('network-container').style.cursor = 'default';
             }
             if (p.nodes.length > 0) {
-                selectedNodeId = p.nodes[0];
-                document.getElementById('floating-plus').style.cssText = `display:block;left:${p.pointer.DOM.x+30}px;top:${p.pointer.DOM.y-30}px;`;
-                nodes.update({id: selectedNodeId, lastUpdate: Date.now()}); saveData();
-            } else { document.getElementById('floating-plus').style.display = 'none'; }
+                const pos = p.pointer.DOM;
+                document.getElementById('floating-plus').style.cssText = `display:block;left:${pos.x+30}px;top:${pos.y-30}px;`;
+                window.selId = p.nodes[0];
+            } else document.getElementById('floating-plus').style.display = 'none';
         });
 
         document.getElementById('floating-plus').onclick = () => {
-            showModal((l) => { const nid=Date.now(); nodes.add({id:nid, label:l, color:colorsCycle[0], colorIndex:0, lastUpdate:Date.now()}); edges.add({from:selectedNodeId, to:nid}); saveData(); });
+            showModal((l) => { const nid=Date.now(); nodes.add({id:nid, label:l, originalLabel:l, color:colorsCycle[0], colorIndex:0, lastUpdate:Date.now()}); edges.add({from:window.selId, to:nid}); saveData(); updateNodeLabels(); });
         };
 
-        // --- TIMELINE & PLAY ---
         function travelTime() {
-            const all = nodes.get();
-            const start = all.map(n=>n.id).sort((a,b)=>a-b)[0];
-            const point = start + (document.getElementById('time-slider').value / 100) * (Date.now() - start);
-            document.getElementById('time-display').innerText = document.getElementById('time-slider').value == 100 ? "HIỆN TẠI" : new Date(point).toLocaleDateString('vi-VN');
-            nodes.update(all.map(n => ({ id: n.id, hidden: n.id > point })));
-            edges.update(edges.get().map(e => ({ id: e.id, hidden: nodes.get(e.from).id > point || nodes.get(e.to).id > point })));
+            const all = nodes.get(); const start = all.map(n=>n.id).sort((a,b)=>a-b)[0];
+            const p = start + (document.getElementById('time-slider').value / 100) * (Date.now() - start);
+            document.getElementById('time-display').innerText = new Date(p).toLocaleDateString('vi-VN');
+            nodes.update(all.map(n => ({ id: n.id, hidden: n.id > p })));
         }
 
         function togglePlay() {
             isPlaying = !isPlaying;
             if(isPlaying) {
-                if(document.getElementById('time-slider').value == 100) document.getElementById('time-slider').value = 0;
-                window.playInt = setInterval(() => {
+                window.pInt = setInterval(() => {
                     let s = document.getElementById('time-slider');
                     if(parseInt(s.value) < 100) { s.value = parseInt(s.value) + 1; travelTime(); }
                     else togglePlay();
                 }, 100 / currentSpeed);
-            } else clearInterval(window.playInt);
+            } else clearInterval(window.pInt);
         }
 
         function changeSpeed() {
             currentSpeed = currentSpeed === 1 ? 2 : (currentSpeed === 2 ? 0.5 : 1);
             document.getElementById('speed-btn').innerText = `x${currentSpeed}`;
-            if(isPlaying) { togglePlay(); togglePlay(); }
         }
 
-        // --- UTILS ---
+        function neuralSearch() {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            nodes.update(nodes.get().map(n => ({ id: n.id, opacity: n.originalLabel.toLowerCase().includes(q) ? 1 : 0.1 })));
+        }
+
         function showModal(cb) {
             document.getElementById('system-modal').classList.remove('hidden');
-            const input = document.getElementById('modal-input'); input.value = ''; setTimeout(()=>input.focus(),100);
-            document.getElementById('modal-confirm').onclick = () => { if(!input.value) return; closeModal(); cb(input.value); };
+            const i = document.getElementById('modal-input'); i.value = ''; setTimeout(()=>i.focus(),100);
+            document.getElementById('modal-confirm').onclick = () => { if(!i.value) return; document.getElementById('system-modal').classList.add('hidden'); cb(i.value); };
         }
-        function closeModal() { document.getElementById('system-modal').classList.add('hidden'); }
-        function saveData() { localStorage.setItem('brain_v15_nodes', JSON.stringify(nodes.get())); localStorage.setItem('brain_v15_edges', JSON.stringify(edges.get())); }
-        function runSpacedRepetition() {
+        function saveData() { localStorage.setItem('brain_v16_nodes', JSON.stringify(nodes.get())); localStorage.setItem('brain_v16_edges', JSON.stringify(edges.get())); }
+        
+        setInterval(() => {
             const now = Date.now(), week = 7 * 24 * 60 * 60 * 1000;
             nodes.update(nodes.get().map(n => ({ id: n.id, shadow: { enabled: (now - (n.lastUpdate || 0) > week), color: '#f43f5e', size: 30 } })));
-        }
+        }, 60000);
 
-        setInterval(runSpacedRepetition, 60000);
         document.getElementById('time-slider').oninput = travelTime;
         nodes.on('*', () => {
-            document.getElementById('node-list').innerHTML = nodes.get().filter(n => !n.hidden).map(n => `<div onclick="network.focus(${n.id},{scale:1.2,animation:true})" class="p-2 cursor-pointer hover:bg-white/5 rounded-xl flex items-center truncate transition-all"><span class="w-1.5 h-1.5 rounded-full mr-3" style="background:${n.color}"></span>${n.label}</div>`).join('');
+            document.getElementById('node-list').innerHTML = nodes.get().filter(n => !n.hidden).map(n => `<div onclick="network.focus(${n.id},{scale:1.2,animation:true})" class="p-2 cursor-pointer hover:bg-white/5 rounded-xl flex items-center truncate text-gray-400"><span class="w-1.5 h-1.5 rounded-full mr-3" style="background:${n.color}"></span>${isQuizMode ? "?" : n.originalLabel}</div>`).join('');
         });
         window.addEventListener('keydown', (e) => { 
-            if(e.key.toLowerCase()==='n') activateAddNodeMode(); 
+            if(e.key.toLowerCase()==='q') toggleQuizMode(); 
+            if(e.key.toLowerCase()==='n') activateAddNodeMode();
             if(e.code==='Space') { e.preventDefault(); network.fit({animation:true}); }
         });
     </script>

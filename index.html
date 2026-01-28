@@ -2,64 +2,215 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Giviso Neural Storage Master - V13</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giviso Neural Sync - Master V14</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --cyan: #06b6d4; --bg: #050508; }
+        :root { --cyan: #06b6d4; --bg: #050508; --warning: #f43f5e; }
         body { background: var(--bg); color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        .font-futuristic { font-family: 'Orbitron', sans-serif; }
         .glass-panel { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); }
         #network-container { width: 100vw; height: 100vh; background: radial-gradient(circle at center, #0d112d 0%, #050508 100%); }
-        /* Tùy chỉnh màu sắc theo loại */
-        .color-student { color: #22c55e; } /* Xanh lá */
-        .color-tech { color: #f97316; }    /* Cam */
-        .color-language { color: #a855f7; } /* Tím */
+        #floating-plus { position: absolute; display: none; width: 35px; height: 35px; background: var(--cyan); border-radius: 50%; color: black; text-align: center; line-height: 35px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 0 20px var(--cyan); transition: transform 0.2s; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--cyan); cursor: pointer; shadow: 0 0 10px var(--cyan); }
+        .vis-manipulation { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="fixed top-24 right-8 z-50 flex flex-col gap-2 glass-panel p-4 rounded-2xl border-r-2 border-cyan-500">
-        <p class="text-[8px] text-gray-500 uppercase font-bold mb-2 tracking-widest">Phân loại kho</p>
-        <button onclick="setNodeType('#22c55e')" class="w-full py-1 px-3 text-[9px] bg-green-500/10 text-green-500 rounded border border-green-500/20 hover:bg-green-500 hover:text-white transition">Học sinh</button>
-        <button onclick="setNodeType('#f97316')" class="w-full py-1 px-3 text-[9px] bg-orange-500/10 text-orange-500 rounded border border-orange-500/20 hover:bg-orange-500 hover:text-white transition">Công nghệ</button>
-        <button onclick="setNodeType('#a855f7')" class="w-full py-1 px-3 text-[9px] bg-purple-500/10 text-purple-500 rounded border border-purple-500/20 hover:bg-purple-500 hover:text-white transition">Ngoại ngữ</button>
+    <div class="fixed top-6 left-8 z-50 pointer-events-none">
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Ultimate_V14</h1>
+        <p class="text-[9px] text-gray-400 uppercase tracking-[0.4em] flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Hệ thống đang sống (Live)
+        </p>
+    </div>
+
+    <div id="floating-plus">+</div>
+
+    <div class="fixed top-24 left-8 z-50 w-64 glass-panel rounded-2xl p-6 border-l-2 border-cyan-500 shadow-2xl">
+        <div id="node-list" class="max-h-[35vh] overflow-y-auto space-y-1 text-[11px] mb-6 pr-2"></div>
+        <button onclick="activateAddNodeMode()" class="w-full py-3 bg-cyan-600/10 border border-cyan-500/30 rounded-xl text-[9px] text-cyan-400 hover:bg-cyan-600 transition uppercase font-bold tracking-widest shadow-lg">
+            + THÊM THỰC THỂ [N]
+        </button>
+    </div>
+
+    <div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[150] w-[70%] glass-panel p-6 rounded-[2rem] border border-white/10 shadow-2xl">
+        <div class="flex items-center gap-4">
+            <button id="play-btn" onclick="togglePlay()" class="w-12 h-12 flex items-center justify-center bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 hover:bg-cyan-500 transition-all">
+                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            <button id="speed-btn" onclick="changeSpeed()" class="w-14 h-12 flex items-center justify-center bg-white/5 border border-white/10 rounded-2xl text-[10px] font-bold text-cyan-400 font-futuristic">x1</button>
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span id="time-display" class="text-[10px] font-mono text-cyan-400/80 tracking-widest uppercase">HIỆN TẠI</span>
+                </div>
+                <input type="range" id="time-slider" class="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer outline-none" min="0" max="100" value="100">
+            </div>
+        </div>
+    </div>
+
+    <div id="data-panel" class="fixed top-0 right-0 h-full w-[400px] glass-panel z-[100] transform translate-x-full transition-transform duration-500 p-10 border-l border-cyan-500/20 shadow-2xl">
+        <button onclick="closePanel()" class="text-gray-500 hover:text-white text-[10px] mb-10 uppercase font-futuristic border border-white/10 px-3 py-1 rounded-lg">✕ Đóng</button>
+        <div id="panel-body" class="space-y-6"></div>
+    </div>
+
+    <div id="system-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md">
+        <div id="modal-box" class="glass-panel w-[450px] p-8 rounded-3xl border border-cyan-500/30 transform scale-95 transition-all">
+            <h3 id="modal-title" class="font-futuristic text-cyan-400 text-xs mb-6 tracking-widest uppercase text-center">Tùy chọn thực thể</h3>
+            <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6" placeholder="Nhập tên kiến thức / học sinh...">
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button id="opt-node" class="p-4 rounded-2xl border border-white/5 bg-white/5 hover:bg-cyan-500/10 hover:border-cyan-500/50 transition-all group text-center">
+                    <p class="text-xs text-white group-hover:text-cyan-400 font-bold mb-1">Tri thức</p>
+                    <p class="text-[8px] text-gray-500 uppercase">Chỉ văn bản</p>
+                </button>
+                <button id="opt-attach" class="p-4 rounded-2xl border border-white/5 bg-white/5 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all group text-center">
+                    <p class="text-xs text-white group-hover:text-purple-400 font-bold mb-1">Đính kèm 🔗</p>
+                    <p class="text-[8px] text-gray-500 uppercase">Có link tài liệu</p>
+                </button>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="closeModal()" class="text-[9px] text-gray-600 hover:text-white uppercase tracking-widest">Hủy thao tác</button>
+            </div>
+        </div>
     </div>
 
     <div id="network-container"></div>
-    <script>
-        // --- Dữ liệu nâng cấp ---
-        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v13_nodes')) || [{ id: Date.now(), label: 'GIVISO_MASTER', color: '#06b6d4' }]);
-        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v13_edges')) || []);
-        let selectedNodeId = null;
 
-        const network = new vis.Network(document.getElementById('network-container'), { nodes, edges }, {
-            nodes: { shape: 'dot', font: { color: '#ffffff', face: 'Inter' }, borderWidth: 2, shadow: true },
-            edges: { color: 'rgba(6, 182, 212, 0.25)', arrows: 'to', smooth: true, dashes: { enabled: true, speed: 5 } },
-            physics: { enabled: true, barnesHut: { gravitationalConstant: -5000, springLength: 180 } }
+    <script>
+        // --- DATA ---
+        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v14_nodes')) || [{ id: Date.now(), label: 'CORE', color: '#06b6d4', level: 3, lastUpdate: Date.now() }]);
+        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('brain_v14_edges')) || []);
+        let selectedNodeId = null;
+        let isAddNodeMode = false;
+        let isPlaying = false;
+        let currentSpeed = 1;
+
+        const container = document.getElementById('network-container');
+        const network = new vis.Network(container, { nodes, edges }, {
+            nodes: { shape: 'dot', font: { color: '#ffffff', face: 'Inter' }, borderWidth: 2, shadow: { enabled: true, color: 'rgba(6,182,212,0.3)', size: 12 } },
+            edges: { color: { color: 'rgba(6, 182, 212, 0.25)', highlight: '#06b6d4' }, arrows: 'to', smooth: true, width: 1.5, dashes: { enabled: true, speed: 5 } },
+            physics: { enabled: true, barnesHut: { gravitationalConstant: -5000, centralGravity: 0.15, springLength: 180, springConstant: 0.04, damping: 0.08 } }
         });
 
-        // HÀM PHÂN LOẠI MÀU CHO KHO
-        function setNodeType(color) {
-            if (!selectedNodeId) return alert("Thầy hãy chọn 1 nút để phân loại!");
-            nodes.update({ id: selectedNodeId, color: color });
-            saveData();
+        // --- MULTI-OPTION MODAL LOGIC ---
+        function showMultiModal(callback) {
+            document.getElementById('system-modal').classList.remove('hidden');
+            const input = document.getElementById('modal-input');
+            input.value = ''; setTimeout(() => input.focus(), 100);
+
+            document.getElementById('opt-node').onclick = () => {
+                if(!input.value) return; closeModal(); callback(input.value, false);
+            };
+            document.getElementById('opt-attach').onclick = () => {
+                if(!input.value) return; closeModal(); callback(input.value, true);
+            };
+        }
+        function closeModal() { document.getElementById('system-modal').classList.add('hidden'); }
+
+        // --- CORE FUNCTIONS ---
+        function activateAddNodeMode() { isAddNodeMode = true; container.style.cursor = 'crosshair'; }
+
+        network.on("click", function(params) {
+            if (isAddNodeMode && params.nodes.length === 0) {
+                const canvasPos = params.pointer.canvas;
+                showMultiModal((label, isAttach) => {
+                    const finalLabel = isAttach ? label + " 🔗" : label;
+                    nodes.add({ id: Date.now(), label: finalLabel, color: isAttach ? '#a855f7' : '#94a3b8', level: 1, lastUpdate: Date.now(), x: canvasPos.x, y: canvasPos.y, isAttach: isAttach });
+                    saveData();
+                });
+                isAddNodeMode = false; container.style.cursor = 'default';
+                return;
+            }
+            if (params.nodes.length > 0) {
+                selectedNodeId = params.nodes[0];
+                const pos = params.pointer.DOM;
+                document.getElementById('floating-plus').style.cssText = `display:block;left:${pos.x+30}px;top:${pos.y-30}px;`;
+                openPanelById(selectedNodeId);
+                network.startSimulation();
+            } else {
+                document.getElementById('floating-plus').style.display = 'none'; closePanel();
+            }
+        });
+
+        document.getElementById('floating-plus').onclick = () => {
+            showMultiModal((label, isAttach) => {
+                const finalLabel = isAttach ? label + " 🔗" : label;
+                const newId = Date.now();
+                nodes.add({ id: newId, label: finalLabel, color: isAttach ? '#a855f7' : '#94a3b8', level: 1, lastUpdate: Date.now(), isAttach: isAttach });
+                edges.add({ from: selectedNodeId, to: newId });
+                saveData();
+            });
+        };
+
+        function openPanelById(id) {
+            const node = nodes.get(id);
+            document.getElementById('data-panel').classList.remove('translate-x-full');
+            document.getElementById('panel-body').innerHTML = `
+                <h2 class="text-2xl font-bold text-cyan-400 font-futuristic mb-4 uppercase">${node.label}</h2>
+                <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                    <p class="text-[9px] text-gray-500 uppercase mb-3">${node.isAttach ? 'Liên kết tài liệu đính kèm' : 'Ghi chú tri thức'}</p>
+                    <textarea id="node-note" class="w-full h-80 bg-transparent text-xs text-gray-300 focus:outline-none leading-relaxed resize-none" placeholder="${node.isAttach ? 'Dán Link Drive/Youtube tại đây...' : 'Nhập kiến thức bài giảng...'}">${node.note || ''}</textarea>
+                </div>
+                <button onclick="updateNote(${id})" class="w-full py-4 mt-6 bg-cyan-600 text-black text-[10px] font-bold rounded-xl uppercase tracking-widest hover:bg-cyan-400 transition">Đồng bộ Neural</button>
+            `;
         }
 
-        // TỰ ĐỘNG PHÁT HIỆN LINK TRONG KHO
-        function updateNote(id) {
-            const noteText = document.getElementById('node-note').value;
-            let labelSuffix = "";
-            if (noteText.includes('http')) labelSuffix = " 🔗"; // Tự động thêm icon nếu có link
-            
-            const originalLabel = nodes.get(id).label.replace(" 🔗", "");
-            nodes.update({ id, note: noteText, label: originalLabel + labelSuffix, lastUpdate: Date.now() });
-            saveData();
-            alert("Đã cập nhật kho lưu trữ!");
+        // --- TIMELINE & SPEED ---
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const icon = document.getElementById('play-icon');
+            if (isPlaying) {
+                if (parseInt(timeSlider.value) >= 100) timeSlider.value = 0;
+                icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+                window.playInt = setInterval(() => {
+                    let val = parseInt(timeSlider.value);
+                    if (val < 100) { timeSlider.value = val + 1; travelTime(); }
+                    else { togglePlay(); }
+                }, 100 / currentSpeed);
+            } else {
+                icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+                clearInterval(window.playInt);
+            }
+        }
+        function changeSpeed() {
+            currentSpeed = currentSpeed === 1 ? 2 : (currentSpeed === 2 ? 0.5 : 1);
+            document.getElementById('speed-btn').innerText = `x${currentSpeed}`;
+            if(isPlaying) { togglePlay(); togglePlay(); }
+        }
+        function travelTime() {
+            const all = nodes.get();
+            const start = all.map(n=>n.id).sort((a,b)=>a-b)[0];
+            const point = start + (timeSlider.value / 100) * (Date.now() - start);
+            timeDisplay.innerText = timeSlider.value == 100 ? "HIỆN TẠI" : new Date(point).toLocaleDateString('vi-VN');
+            nodes.update(all.map(n => ({ id: n.id, hidden: n.id > point })));
+            edges.update(edges.get().map(e => ({ id: e.id, hidden: nodes.get(e.from).id > point || nodes.get(e.to).id > point })));
         }
 
-        // ... (Giữ nguyên các hàm: saveData, togglePlay, travelTime từ V12) ...
-        function saveData() { localStorage.setItem('brain_v13_nodes', JSON.stringify(nodes.get())); localStorage.setItem('brain_v13_edges', JSON.stringify(edges.get())); }
+        // --- UTILS ---
+        function updateNote(id) { nodes.update({ id, note: document.getElementById('node-note').value, lastUpdate: Date.now() }); saveData(); }
+        function saveData() { localStorage.setItem('brain_v14_nodes', JSON.stringify(nodes.get())); localStorage.setItem('brain_v14_edges', JSON.stringify(edges.get())); }
+        function closePanel() { document.getElementById('data-panel').classList.add('translate-x-full'); }
+        function focusCenter() { network.fit({animation:true}); }
+        function runSpacedRepetition() {
+            const now = Date.now(), week = 7 * 24 * 60 * 60 * 1000;
+            nodes.update(nodes.get().map(node => ({ id: node.id, shadow: { enabled: (now - (node.lastUpdate || 0) > week && node.level < 3), color: '#f43f5e', size: 30 } })));
+        }
+
+        timeSlider.oninput = travelTime;
+        nodes.on('*', () => {
+            document.getElementById('node-count').innerText = `${nodes.get().length} NODES`;
+            document.getElementById('node-list').innerHTML = nodes.get().filter(n => !n.hidden).map(n => `<div onclick="network.focus(${n.id},{scale:1.2,animation:true});openPanelById(${n.id})" class="p-2 cursor-pointer hover:bg-white/5 rounded-xl flex items-center transition-all"><span class="w-1.5 h-1.5 rounded-full mr-3" style="background:${n.color}"></span>${n.label}</div>`).join('');
+        });
+
+        setInterval(runSpacedRepetition, 60000);
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'n') activateAddNodeMode();
+            if (e.code === 'Space' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); focusCenter(); }
+        });
     </script>
 </body>
 </html>

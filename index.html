@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Neural Sync - V18 Fix</title>
+    <title>Giviso Neural Sync - V19 Ultimate Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -18,18 +18,17 @@
         .zoom-wrapper { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .vertical-slider { appearance: none; width: 4px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 10px; outline: none; -webkit-appearance: slider-vertical; }
         #floating-plus { position: absolute; display: none; width: 35px; height: 35px; background: var(--cyan); border-radius: 50%; color: black; text-align: center; line-height: 35px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 0 20px var(--cyan); }
-        /* Fix khoảng cách tên */
-        .vis-network { outline: none; }
         .vis-label { white-space: pre-wrap !important; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--cyan); cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="fixed top-6 left-8 z-50 pointer-events-none">
-        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_V18_Fixed</h1>
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Cloud_V19</h1>
         <div id="sync-status" class="text-[8px] text-gray-500 uppercase tracking-widest flex items-center gap-2">
             <span id="sync-dot" class="w-1.5 h-1.5 bg-gray-600 rounded-full"></span> 
-            <span id="sync-text">Kiểm tra kết nối...</span>
+            <span id="sync-text">Cloud Sync: Standby</span>
         </div>
     </div>
 
@@ -37,12 +36,12 @@
 
     <div class="fixed top-24 left-8 z-50 w-64 glass-panel rounded-2xl p-6 border-l-2 border-cyan-500 shadow-2xl">
         <button id="quiz-btn" onclick="toggleQuizMode()" class="w-full py-3 mb-4 bg-white/5 border border-white/10 rounded-xl text-[9px] text-gray-400 hover:text-white transition uppercase font-bold flex items-center justify-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
             Quiz [Q]
         </button>
         <input type="text" id="search-input" oninput="neuralSearch()" placeholder="Tìm tên..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] text-cyan-400 focus:outline-none mb-4">
         <div id="node-list" class="max-h-[30vh] overflow-y-auto space-y-1 text-[11px] pr-2"></div>
-        <button onclick="activateAddNodeMode()" class="w-full mt-4 py-3 bg-cyan-600/10 border border-cyan-500/30 rounded-xl text-[9px] text-cyan-400 hover:bg-cyan-600 transition uppercase font-bold">+ Thêm [N]</button>
+        <button onclick="activateAddNodeMode()" class="w-full mt-4 py-3 bg-cyan-600/10 border border-cyan-500/30 rounded-xl text-[9px] text-cyan-400 hover:bg-cyan-600 transition font-bold uppercase tracking-widest">+ Thêm [N]</button>
     </div>
 
     <div class="zoom-wrapper glass-panel py-6 px-2 rounded-full border border-white/5">
@@ -55,20 +54,18 @@
                 <svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </button>
             <div class="flex-1 px-4">
-                <input type="range" id="time-slider" class="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer" min="0" max="100" value="100">
+                <input type="range" id="time-slider" oninput="travelTime()" class="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer" min="0" max="100" value="100">
+                <p id="time-display" class="text-[8px] text-center mt-2 text-gray-600 font-mono uppercase tracking-widest">Timeline Journey</p>
             </div>
         </div>
     </div>
 
     <div id="system-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md">
-        <div id="modal-box" class="glass-panel w-96 p-8 rounded-3xl border border-cyan-500/30 relative">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-            
-            <h3 class="font-futuristic text-cyan-400 text-[10px] mb-6 uppercase text-center tracking-widest">Tạo Neuron Mới</h3>
-            <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6" placeholder="Nhập tên có khoảng cách...">
-            <button id="modal-confirm" class="w-full py-4 rounded-xl bg-cyan-600 text-black text-[10px] font-bold uppercase tracking-widest hover:bg-cyan-500 transition-colors">Xác nhận</button>
+        <div id="modal-box" class="glass-panel w-96 p-8 rounded-3xl border border-cyan-500/30 relative shadow-2xl">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <h3 class="font-futuristic text-cyan-400 text-[10px] mb-6 uppercase text-center tracking-widest">Tạo Neuron Cloud</h3>
+            <input type="text" id="modal-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-cyan-500 mb-6" placeholder="Nhập tên học sinh/kiến thức...">
+            <button id="modal-confirm" class="w-full py-4 rounded-xl bg-cyan-600 text-black text-[10px] font-bold uppercase tracking-widest">Xác nhận</button>
         </div>
     </div>
 
@@ -87,42 +84,39 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // --- 2. DATA ---
+        // --- 2. INITIAL DATA ---
         let nodes = new vis.DataSet();
         let edges = new vis.DataSet();
-        let isQuizMode = false, isAddNodeMode = false;
+        let isQuizMode = false, isAddNodeMode = false, isPlaying = false;
         const colorsCycle = ['#06b6d4', '#22c55e', '#eab308', '#f97316', '#a855f7', '#f43f5e'];
 
         const network = new vis.Network(document.getElementById('network-container'), { nodes, edges }, {
-            nodes: { shape: 'dot', font: { color: '#ffffff', face: 'Inter', size: 14, multi: true }, borderWidth: 2 },
-            edges: { color: 'rgba(6, 182, 212, 0.2)', arrows: 'to', smooth: true },
-            physics: { enabled: true, barnesHut: { gravitationalConstant: -5000 } }
+            nodes: { shape: 'dot', font: { color: '#ffffff', face: 'Inter', size: 14, multi: true }, borderWidth: 2, shadow: true },
+            edges: { color: 'rgba(6, 182, 212, 0.2)', arrows: 'to', smooth: true, dashes: { enabled: true, speed: 5 } },
+            physics: { enabled: true, barnesHut: { gravitationalConstant: -5000, centralGravity: 0.1, springLength: 200 } }
         });
 
-        // --- 3. FIX LỖI LƯU TRỮ (Chuyển Data sang Object trước khi đẩy lên Cloud) ---
+        // --- 3. CLOUD LOGIC (Fixed) ---
         function saveData() {
-            const dataToSave = {
+            const data = {
                 nodes: nodes.get().map(n => ({...n})),
                 edges: edges.get().map(e => ({...e})),
                 updateAt: Date.now()
             };
-            
-            db.ref('neural_brain').set(dataToSave)
-                .then(() => updateStatus(true))
-                .catch(() => updateStatus(false));
+            db.ref('neural_brain').set(data).then(() => updateStatus(true)).catch(() => updateStatus(false));
         }
 
         function loadData() {
-            db.ref('neural_brain').on('value', (snap) => {
+            db.ref('neural_brain').once('value', (snap) => {
                 const val = snap.val();
                 if(val && val.nodes) {
                     nodes.update(val.nodes);
                     if(val.edges) edges.update(val.edges);
                     updateLabels();
                     updateStatus(true);
+                    network.fit({animation: true});
                 } else {
-                    // Node khởi tạo nếu chưa có dữ liệu
-                    nodes.add({ id: 1000, label: 'GIVISO', originalLabel: 'GIVISO', color: colorsCycle[0], colorIndex: 0 });
+                    nodes.add({ id: 1000, label: 'GIVISO', originalLabel: 'GIVISO', color: colorsCycle[0], colorIndex: 0, lastUpdate: Date.now() });
                 }
             });
         }
@@ -134,25 +128,50 @@
             txt.innerText = success ? "Cloud Synced" : "Lỗi kết nối Firebase";
         }
 
-        // --- 4. TÍNH NĂNG ---
+        // --- 4. TÍNH NĂNG (Bổ sung Play/Time) ---
         function toggleQuizMode() { isQuizMode = !isQuizMode; document.getElementById('quiz-btn').classList.toggle('bg-red-500/20'); updateLabels(); }
         function updateLabels() { nodes.update(nodes.get().map(n => ({ id: n.id, label: isQuizMode ? "?" : n.originalLabel }))); }
-        
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const icon = document.getElementById('play-icon');
+            if (isPlaying) {
+                if (parseInt(document.getElementById('time-slider').value) >= 100) document.getElementById('time-slider').value = 0;
+                icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+                window.pInt = setInterval(() => {
+                    let s = document.getElementById('time-slider');
+                    if(parseInt(s.value) < 100) { s.value = parseInt(s.value) + 1; travelTime(); } else togglePlay();
+                }, 150);
+            } else {
+                icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+                clearInterval(window.pInt);
+            }
+        }
+
+        function travelTime() {
+            const all = nodes.get(); if (all.length === 0) return;
+            const start = all.map(n=>n.id).sort((a,b)=>a-b)[0];
+            const p = start + (document.getElementById('time-slider').value / 100) * (Date.now() - start);
+            document.getElementById('time-display').innerText = new Date(p).toLocaleDateString('vi-VN');
+            nodes.update(all.map(n => ({ id: n.id, hidden: n.id > p })));
+        }
+
         network.on("doubleClick", (p) => {
             if(p.nodes.length > 0) {
                 const id = p.nodes[0]; const n = nodes.get(id);
                 let idx = ((n.colorIndex || 0) + 1) % colorsCycle.length;
-                nodes.update({ id, color: colorsCycle[idx], colorIndex: idx });
+                nodes.update({ id, color: colorsCycle[idx], colorIndex: idx, lastUpdate: Date.now() });
                 saveData();
             }
         });
 
+        // --- 5. MODAL & INTERACTION ---
         function activateAddNodeMode() { isAddNodeMode = true; document.getElementById('network-container').style.cursor = 'crosshair'; }
         
         network.on("click", (p) => {
             if (isAddNodeMode && p.nodes.length === 0) {
                 showModal((l) => { 
-                    nodes.add({id:Date.now(), label:l, originalLabel:l, color:colorsCycle[0], colorIndex:0, x:p.pointer.canvas.x, y:p.pointer.canvas.y}); 
+                    nodes.add({id:Date.now(), label:l, originalLabel:l, color:colorsCycle[0], colorIndex:0, lastUpdate:Date.now(), x:p.pointer.canvas.x, y:p.pointer.canvas.y}); 
                     saveData(); updateLabels(); 
                 });
                 isAddNodeMode = false; document.getElementById('network-container').style.cursor = 'default';
@@ -166,13 +185,12 @@
         document.getElementById('floating-plus').onclick = () => {
             showModal((l) => { 
                 const nid=Date.now(); 
-                nodes.add({id:nid, label:l, originalLabel:l, color:colorsCycle[0], colorIndex:0}); 
+                nodes.add({id:nid, label:l, originalLabel:l, color:colorsCycle[0], colorIndex:0, lastUpdate:Date.now()}); 
                 edges.add({from:window.selId, to:nid}); 
                 saveData(); updateLabels(); 
             });
         };
 
-        // --- 5. MODAL & UTILS ---
         function showModal(cb) {
             document.getElementById('system-modal').classList.remove('hidden');
             const i = document.getElementById('modal-input'); i.value = ''; setTimeout(()=>i.focus(),100);
@@ -183,14 +201,21 @@
         document.getElementById('zoom-slider').oninput = function() { network.moveTo({ scale: parseFloat(this.value) }); };
         function neuralSearch() { const q = document.getElementById('search-input').value.toLowerCase(); nodes.update(nodes.get().map(n => ({ id: n.id, opacity: n.originalLabel.toLowerCase().includes(q) ? 1 : 0.1 }))); }
 
+        // --- 6. SPACED REPETITION (7 DAYS) ---
+        setInterval(() => {
+            const now = Date.now(), week = 7 * 24 * 60 * 60 * 1000;
+            nodes.update(nodes.get().map(n => ({ id: n.id, shadow: { enabled: (now - (n.lastUpdate || 0) > week), color: '#f43f5e', size: 30 } })));
+        }, 60000);
+
         nodes.on('*', () => {
-            document.getElementById('node-list').innerHTML = nodes.get().map(n => `<div onclick="network.focus(${n.id},{scale:1.2,animation:true})" class="p-2 cursor-pointer hover:bg-white/5 rounded-xl flex items-center truncate text-gray-500"><span class="w-1.5 h-1.5 rounded-full mr-3" style="background:${n.color}"></span>${isQuizMode ? "?" : n.originalLabel}</div>`).join('');
+            document.getElementById('node-list').innerHTML = nodes.get().filter(n => !n.hidden).map(n => `<div onclick="network.focus(${n.id},{scale:1.2,animation:true})" class="p-2 cursor-pointer hover:bg-white/5 rounded-xl flex items-center truncate text-gray-500"><span class="w-1.5 h-1.5 rounded-full mr-3" style="background:${n.color}"></span>${isQuizMode ? "?" : n.originalLabel}</div>`).join('');
         });
 
         window.addEventListener('keydown', (e) => { 
             if(e.key.toLowerCase()==='q') toggleQuizMode(); 
             if(e.key.toLowerCase()==='n') activateAddNodeMode();
             if(e.key === 'Escape') closeModal();
+            if(e.code==='Space') { e.preventDefault(); network.fit({animation:true}); }
         });
 
         loadData();

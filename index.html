@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Doc Hub - Mega System</title>
+    <title>Neural Doc Hub - Mega System V3.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -13,13 +13,14 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-dark); color: white; overflow: hidden; }
         .neural-font { font-family: 'Orbitron', sans-serif; }
         
-        /* Hiệu ứng Glassmorphism & Neon */
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(0, 242, 255, 0.2); }
         .neon-border:focus-within { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); }
         .file-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.05); }
-        .file-card:hover { transform: translateY(-10px) scale(1.02); border-color: var(--neon-purple); box-shadow: 0 0 20px rgba(188, 19, 254, 0.3); }
+        .file-card:hover { transform: translateY(-5px); border-color: var(--neon-purple); box-shadow: 0 0 20px rgba(188, 19, 254, 0.3); }
         
-        /* Scrollbar tàng hình */
+        /* Hiển thị ảnh Preview */
+        .image-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 1rem; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); }
+        
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 10px; }
     </style>
@@ -36,18 +37,18 @@
             </div>
 
             <nav class="flex-1 space-y-2">
-                <button onclick="changeCategory('all', this)" class="w-full flex items-center p-3 rounded-xl bg-slate-800/50 text-cyan-400 border border-cyan-500/30">
+                <button onclick="filterType('all')" class="category-btn w-full flex items-center p-3 rounded-xl bg-slate-800/50 text-cyan-400 border border-cyan-500/30">
                     <i class="fas fa-network-wired mr-3"></i> LIVE MODE
                 </button>
                 <div class="h-px bg-slate-800 my-4"></div>
-                <button onclick="changeCategory('pdf', this)" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-red-400"><i class="fas fa-file-pdf mr-3 w-5"></i> PDF</button>
-                <button onclick="changeCategory('xlsx', this)" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-green-400"><i class="fas fa-file-excel mr-3 w-5"></i> EXCEL</button>
-                <button onclick="changeCategory('docx', this)" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-blue-400"><i class="fas fa-file-word mr-3 w-5"></i> WORD</button>
-                <button onclick="changeCategory('mp3', this)" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-purple-400"><i class="fas fa-bolt mr-3 w-5"></i> MP3 CORE</button>
+                <button onclick="filterType('pdf')" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-red-400"><i class="fas fa-file-pdf mr-3 w-5"></i> PDF</button>
+                <button onclick="filterType('image')" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-yellow-400"><i class="fas fa-image mr-3 w-5"></i> HÌNH ẢNH</button>
+                <button onclick="filterType('xlsx')" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-green-400"><i class="fas fa-file-excel mr-3 w-5"></i> EXCEL</button>
+                <button onclick="filterType('docx')" class="w-full flex items-center p-3 rounded-xl hover:bg-slate-800 transition text-slate-400 hover:text-blue-400"><i class="fas fa-file-word mr-3 w-5"></i> WORD</button>
             </nav>
             
             <div class="mt-auto pt-6 border-t border-slate-800 text-[10px] neural-font text-slate-500 text-center tracking-[0.2em]">
-                MEGA SYSTEM V3.2
+                MEGA SYSTEM V3.3
             </div>
         </aside>
 
@@ -58,15 +59,15 @@
                 <div class="max-w-3xl mx-auto relative group neon-border rounded-2xl bg-slate-900/50">
                     <i class="fas fa-brain absolute left-5 top-1/2 -translate-y-1/2 text-cyan-400 animate-pulse"></i>
                     <input type="text" id="smartSearch" onkeyup="handleSearch(this.value)" 
-                           placeholder="TRUY XUẤT NGỮ NGHĨA (Gõ để tìm file hoặc sự kiện)..." 
+                           placeholder="TRUY XUẤT NGỮ NGHĨA..." 
                            class="w-full pl-14 pr-6 py-4 bg-transparent outline-none text-cyan-50 placeholder-slate-500 font-medium tracking-wide">
                 </div>
 
                 <div class="flex items-center space-x-4 max-w-5xl mx-auto bg-slate-800/30 p-2 rounded-2xl border border-white/5">
-                    <input type="text" id="inputName" placeholder="Tên tài liệu..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm border-r border-slate-700">
-                    <input type="text" id="inputUrl" placeholder="Liên kết dữ liệu..." class="flex-[2] bg-transparent px-4 py-2 outline-none text-sm">
-                    <button id="saveBtn" onclick="handleSave()" class="bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white px-8 py-2 rounded-xl font-bold transition shadow-[0_0_15px_rgba(6,182,212,0.3)] text-xs">
-                        LIÊN KẾT
+                    <input type="text" id="inputName" placeholder="Tên tài liệu hoặc danh sách..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm border-r border-slate-700">
+                    <input type="text" id="inputUrl" placeholder="Liên kết (URL ảnh, file, list)..." class="flex-[2] bg-transparent px-4 py-2 outline-none text-sm">
+                    <button id="saveBtn" onclick="handleSave()" class="bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white px-8 py-2 rounded-xl font-bold transition shadow-[0_0_15px_rgba(6,182,212,0.3)] text-xs uppercase">
+                        Ghi vào Node
                     </button>
                 </div>
             </header>
@@ -95,10 +96,19 @@
             const uI = document.getElementById('inputUrl');
             if(!nI.value || !uI.value) return;
 
-            const type = nI.value.split('.').pop().toLowerCase();
+            // Nhận diện kiểu file dựa trên đuôi hoặc nội dung
+            const ext = nI.value.split('.').pop().toLowerCase();
+            let type = 'other';
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
+            else if (['pdf'].includes(ext)) type = 'pdf';
+            else if (['xlsx', 'csv'].includes(ext)) type = 'xlsx';
+            else if (['docx'].includes(ext)) type = 'docx';
+            else if (nI.value.toLowerCase().includes('danh sách')) type = 'list'; // Nhận diện từ khóa danh sách
+
             await addDoc(collection(db, "mega_docs"), {
-                name: nI.value, url: uI.value, 
-                type: ['pdf','xlsx','docx','pptx','mp3'].includes(type) ? type : 'other',
+                name: nI.value, 
+                url: uI.value, 
+                type: type,
                 time: new Date().getTime(),
                 dateLabel: new Date().toLocaleDateString('vi-VN')
             });
@@ -114,28 +124,44 @@
 
         window.render = (data) => {
             const grid = document.getElementById('fileGrid');
-            const icons = { pdf: 'fa-file-pdf text-red-500', xlsx: 'fa-file-excel text-green-500', docx: 'fa-file-word text-blue-500', mp3: 'fa-bolt text-purple-400' };
+            const icons = { 
+                pdf: 'fa-file-pdf text-red-500', 
+                xlsx: 'fa-file-excel text-green-500', 
+                docx: 'fa-file-word text-blue-500', 
+                list: 'fa-list-ul text-cyan-400'
+            };
             
-            grid.innerHTML = data.map(f => `
-                <div class="file-card p-6 rounded-[2rem] relative group overflow-hidden">
-                    <div class="absolute -right-4 -top-4 w-20 h-20 bg-cyan-500/5 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
-                    <button onclick="deleteDoc('${f.id}')" class="absolute top-4 right-4 text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">&times;</button>
-                    
-                    <div class="mb-4 text-[10px] neural-font text-cyan-500/50 tracking-widest uppercase">NODE_${f.dateLabel}</div>
-                    <div class="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mb-6 shadow-inner border border-white/5">
+            grid.innerHTML = data.map(f => {
+                // Logic hiển thị đặc biệt cho Ảnh
+                const contentPreview = f.type === 'image' 
+                    ? `<img src="${f.url}" class="image-preview" onerror="this.src='https://placehold.co/400x200?text=Image+Error'">`
+                    : `<div class="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mb-6 shadow-inner border border-white/5">
                         <i class="fas ${icons[f.type] || 'fa-atom text-cyan-400'} text-2xl"></i>
+                       </div>`;
+
+                return `
+                    <div class="file-card p-6 rounded-[2rem] relative group overflow-hidden">
+                        <button onclick="window.deleteNode('${f.id}')" class="absolute top-4 right-4 text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition z-10">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        
+                        <div class="mb-4 text-[10px] neural-font text-cyan-500/50 tracking-widest uppercase">NODE_${f.dateLabel}</div>
+                        
+                        ${contentPreview}
+                        
+                        <h3 class="font-bold text-slate-200 mb-6 truncate neural-font text-xs tracking-wider" title="${f.name}">${f.name}</h3>
+                        
+                        <a href="${f.url}" target="_blank" class="block w-full py-3 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-slate-900 rounded-xl text-[9px] font-black text-center transition-all uppercase tracking-[0.3em] border border-cyan-500/30">
+                            ${f.type === 'image' ? 'VIEW_FULLSCREEN' : 'OPEN_STREAM'}
+                        </a>
                     </div>
-                    <h3 class="font-bold text-slate-200 mb-6 truncate neural-font text-xs tracking-wider" title="${f.name}">${f.name}</h3>
-                    
-                    <a href="${f.url}" target="_blank" class="block w-full py-3 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-slate-900 rounded-xl text-[9px] font-black text-center transition-all uppercase tracking-[0.3em] border border-cyan-500/30">
-                        OPEN_STREAM
-                    </a>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         };
 
         window.handleSearch = (v) => render(allDocs.filter(f => f.name.toLowerCase().includes(v.toLowerCase())));
-        window.deleteDoc = async (id) => { if(confirm("DELETE NODE?")) { await deleteDoc(doc(db, "mega_docs", id)); fetchDocs(); } };
+        window.filterType = (t) => t === 'all' ? render(allDocs) : render(allDocs.filter(f => f.type === t));
+        window.deleteNode = async (id) => { if(confirm("XÓA DỮ LIỆU KHỎI HỆ THỐNG?")) { await deleteDoc(doc(db, "mega_docs", id)); fetchDocs(); } };
 
         fetchDocs();
     </script>

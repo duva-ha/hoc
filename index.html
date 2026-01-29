@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Neural Sync - V31 Stable</title>
+    <title>Giviso Neural Sync - V32 Final Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -20,12 +20,13 @@
         .vertical-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); border: none; }
         #floating-plus { position: absolute; display: none; width: 35px; height: 35px; background: var(--cyan); border-radius: 50%; color: black; text-align: center; line-height: 35px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 0 20px var(--cyan); }
         .vis-label { white-space: pre !important; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--cyan); cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="fixed top-6 left-8 z-50 pointer-events-none">
-        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Stable_V31</h1>
+        <h1 class="font-futuristic text-2xl text-cyan-400 tracking-tighter uppercase">Neural_Master_V32</h1>
         <div id="sync-status" class="text-[8px] text-gray-500 uppercase tracking-widest flex items-center gap-2">
             <span id="sync-dot" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span> 
             <span id="sync-text">Cloud Sync: Online</span>
@@ -39,7 +40,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
             Quiz [Q]
         </button>
-        <input type="text" id="search-input" oninput="neuralSearch()" placeholder="Tìm tên..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] text-cyan-400 focus:outline-none mb-4">
+        <input type="text" id="search-input" oninput="neuralSearch()" placeholder="Tìm tên..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] text-cyan-400 focus:outline-none mb-4 text-white">
         <div id="node-list" class="max-h-[30vh] overflow-y-auto space-y-1 text-[11px] pr-2"></div>
         <button onclick="startAddingNode()" class="w-full mt-4 py-3 bg-cyan-600/10 border border-cyan-500/30 rounded-xl text-[9px] text-cyan-400 hover:bg-cyan-600 transition font-bold uppercase tracking-widest">+ Thêm Neuron [N]</button>
     </div>
@@ -79,7 +80,7 @@
     <div id="network-container"></div>
 
     <script>
-        // --- CONFIG ---
+        // --- FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCmTIcdk8mpNY9gp4Cg9AoZsvrByMtTc3Q",
             authDomain: "qlhs-app.firebaseapp.com",
@@ -104,7 +105,7 @@
             physics: { enabled: true, barnesHut: { gravitationalConstant: -5000, centralGravity: 0.15, springLength: 200 } }
         });
 
-        // --- FIREBASE SYNC ---
+        // --- CLOUD SYNC ---
         function saveData() {
             const data = {
                 nodes: nodes.get().map(n => { const { x, y, ...rest } = n; return JSON.parse(JSON.stringify(rest)); }),
@@ -127,24 +128,28 @@
             });
         }
 
-        // --- CHRONOS STABLE ---
+        // --- ĐỔI MÀU NHẤP ĐÚP ---
+        network.on("doubleClick", (p) => {
+            if(p.nodes.length > 0) {
+                const id = p.nodes[0]; const n = nodes.get(id);
+                let idx = ((n.colorIndex || 0) + 1) % colorsCycle.length;
+                nodes.update({ id, color: colorsCycle[idx], colorIndex: idx });
+                saveData();
+            }
+        });
+
+        // --- CHRONOS ENGINE ---
         function travelTime() {
             const slider = document.getElementById('time-slider');
-            const allNodes = nodes.get();
-            if (allNodes.length < 1) return;
-
+            const allNodes = nodes.get(); if (allNodes.length < 1) return;
             const timestamps = allNodes.map(n => n.id).sort((a,b) => a-b);
             const start = timestamps[0];
-            const end = Date.now();
-            
-            const currentPoint = start + (parseFloat(slider.value) / 100) * (end - start);
+            const currentPoint = start + (parseFloat(slider.value) / 100) * (Date.now() - start);
             document.getElementById('time-display').innerText = slider.value == 100 ? "LIVE" : new Date(currentPoint).toLocaleDateString('vi-VN');
-            
             nodes.update(allNodes.map(n => ({ id: n.id, hidden: n.id > currentPoint })));
             edges.update(edges.get().map(e => {
-                const fromN = nodes.get(e.from);
-                const toN = nodes.get(e.to);
-                return { id: e.id, hidden: (fromN && fromN.id > currentPoint) || (toN && toN.id > currentPoint) };
+                const fN = nodes.get(e.from), tN = nodes.get(e.to);
+                return { id: e.id, hidden: (fN && fN.id > currentPoint) || (tN && tN.id > currentPoint) };
             }));
         }
 
@@ -152,16 +157,14 @@
             isPlaying = !isPlaying;
             const icon = document.getElementById('play-icon');
             const slider = document.getElementById('time-slider');
-            
             if (isPlaying) {
                 if (parseFloat(slider.value) >= 100) slider.value = 0;
                 icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-                const unitValue = parseInt(document.getElementById('time-unit').value);
+                const unitV = parseInt(document.getElementById('time-unit').value);
                 const start = Math.min(...nodes.get().map(n => n.id));
-                const totalSpan = Date.now() - start;
-
+                const totalS = Date.now() - start;
                 playInterval = setInterval(() => {
-                    let step = (unitValue === 1) ? (1000 / totalSpan * 100) : ((unitValue / 10) / totalSpan * 100);
+                    let step = (unitV === 1) ? (1000 / totalS * 100) : ((unitV / 10) / totalS * 100);
                     let newVal = parseFloat(slider.value) + step;
                     if (newVal < 100) { slider.value = newVal; travelTime(); }
                     else { slider.value = 100; travelTime(); togglePlay(); }
@@ -172,11 +175,8 @@
             }
         }
 
-        // --- INTERACTION ---
-        function startAddingNode() {
-            isAddNodeMode = true;
-            document.getElementById('network-container').style.cursor = 'crosshair';
-        }
+        // --- TẠO MỚI ---
+        function startAddingNode() { isAddNodeMode = true; document.getElementById('network-container').style.cursor = 'crosshair'; }
 
         network.on("click", (p) => {
             if (isAddNodeMode && p.nodes.length === 0) {
@@ -185,14 +185,11 @@
                     nodes.add({ id: Date.now(), label: l, originalLabel: l, color: colorsCycle[0], colorIndex: 0, x: canvasPos.x, y: canvasPos.y });
                     saveData(); updateLabels();
                 });
-                isAddNodeMode = false;
-                document.getElementById('network-container').style.cursor = 'default';
+                isAddNodeMode = false; document.getElementById('network-container').style.cursor = 'default';
             } else if (p.nodes.length > 0) {
                 selectedNodeId = p.nodes[0];
                 document.getElementById('floating-plus').style.cssText = `display:block;left:${p.pointer.DOM.x+30}px;top:${p.pointer.DOM.y-30}px;`;
-            } else {
-                document.getElementById('floating-plus').style.display = 'none';
-            }
+            } else { document.getElementById('floating-plus').style.display = 'none'; }
         });
 
         document.getElementById('floating-plus').onclick = () => {
@@ -204,32 +201,20 @@
             });
         };
 
-        // --- KEYBOARD SAFETY ---
+        // --- KEYBOARD & UTILS ---
         window.addEventListener('keydown', (e) => { 
-            // KHÔNG cho phép xóa nếu đang gõ trong ô nhập liệu
             if (e.target.tagName === 'INPUT') return;
-
-            // CHỈ cho phép phím Delete vật lý để xóa Neuron
             if(e.key === 'Delete') {
-                const selected = network.getSelectedNodes();
-                if(selected.length > 0) {
-                    const label = nodes.get(selected[0]).originalLabel;
-                    if(confirm(`Xác nhận xóa thực thể: ${label}?`)) { nodes.remove(selected[0]); saveData(); }
-                }
+                const sel = network.getSelectedNodes();
+                if(sel.length > 0 && confirm(`Xác nhận xóa: ${nodes.get(sel[0]).originalLabel}?`)) { nodes.remove(sel[0]); saveData(); }
             }
-
             if(e.key.toLowerCase()==='q') toggleQuizMode(); 
             if(e.key.toLowerCase()==='n') startAddingNode();
             if(e.key === 'Escape') { closeModal(); isAddNodeMode = false; document.getElementById('network-container').style.cursor = 'default'; }
             if(e.code==='Space') { e.preventDefault(); network.fit({animation:true}); }
         });
 
-        // --- UTILS ---
-        function showModal(cb) {
-            document.getElementById('system-modal').classList.remove('hidden');
-            const i = document.getElementById('modal-input'); i.value = ''; setTimeout(()=>i.focus(),100);
-            document.getElementById('modal-confirm').onclick = () => { if(!i.value) return; closeModal(); cb(i.value); };
-        }
+        function showModal(cb) { document.getElementById('system-modal').classList.remove('hidden'); const i = document.getElementById('modal-input'); i.value = ''; setTimeout(()=>i.focus(),100); document.getElementById('modal-confirm').onclick = () => { if(!i.value) return; closeModal(); cb(i.value); }; }
         function closeModal() { document.getElementById('system-modal').classList.add('hidden'); }
         function neuralSearch() { const q = document.getElementById('search-input').value.toLowerCase(); nodes.update(nodes.get().map(n => ({ id: n.id, opacity: n.originalLabel.toLowerCase().includes(q) ? 1 : 0.1 }))); }
         function toggleQuizMode() { isQuizMode = !isQuizMode; document.getElementById('quiz-btn').classList.toggle('bg-red-500/20'); updateLabels(); }
